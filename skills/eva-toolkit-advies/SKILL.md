@@ -22,6 +22,8 @@ Je adviseert Erkan (Boom Recruitment) welke tools uit zijn gereedschapskist pass
 
 Beoordeel elke nieuwe tool op:
 - **Herkomst**: officieel (maker zelf, bv. Google, GreenSock, Supabase) of hobbyproject/influencer? Controleer de GitHub-account.
+- **Wat doet het écht?** Lees de README zelf, niet alleen de reel of de naam. (Les: AgentShield leek een website-scanner, maar scant alleen Claude Code-configuratie.)
+- **npm/pip-pakket**: controleer of de uitgever dezelfde is als de GitHub-maker (`npm view <pakket> maintainers repository.url`).
 - **Lokkertje?** "Comment X voor de link", gesponsorde claims (bv. "+327%"), verkoop van een betaald platform erachter.
 - **Data**: gaan prompts of kandidaatgegevens via onbekende partijen? Dan afraden.
 - **Meerwaarde**: lost het een probleem op dat Erkan echt heeft, of is het indrukwekkend maar overbodig?

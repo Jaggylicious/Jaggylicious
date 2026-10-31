@@ -25,6 +25,13 @@ Status: ✅ standaard · ⚙️ bij voorwaarde · ⛔ afgeraden.
 
 ## Design & front-end
 
+### MotionSites (Motionsites-AI/claude-skill) ⚙️
+- Wat: skill voor "filmische" landingspagina's met veel motion, 40 voorbeeldprompts.
+- Gebruik als: promo-/eventpagina of showroom waar uitstraling voorop staat (Boom Events, Carbutler-showroom).
+- Niet als: bedrijfs- of recruitmentsite (snelheid/SEO); niet naast GSAP voor hetzelfde.
+- Let op: jong project (~470 sterren); skill MIT, maar prompts/media © MotionSites; waarschijnlijk funnel naar betaald platform. Herkomst post: Nick Saraev (morenicksaraev), koppeling met het project niet bevestigd.
+- Installatie: via Claude Code plugin marketplace of map kopiëren naar `~/.claude/skills/`.
+
 ### GSAP skill (greensock/gsap-skills) ⚙️
 - Wat: scroll-animaties, tekst-reveals, timelines.
 - Gebruik als: premium uitstraling gewenst (bv. autoverkoop, events, portfolio).
@@ -59,11 +66,11 @@ Status: ✅ standaard · ⚙️ bij voorwaarde · ⛔ afgeraden.
 - Voordelen: huisstijl exact, geen kosten per video, herhaalbaar via sjablonen.
 - Let op: licentie controleren (gratis voor individuen/kleine bedrijven, kan wijzigen); vereist Node.js.
 - Installatie: `npx create-video@latest` in een nieuwe map; daarna Claude Code in die map laten werken.
+- Gebouwd: sjabloon `templates/vacature-reel` (9:16, 9–16 sec, lege velden vallen weg). Zie Eva-skills.
 
-### Eigen contentskills (nog te bouwen) ✅
-- Vacature → LinkedIn/Instagram-post in Boom-toon en huisstijl.
-- Carrousel-builder in Boom-kleuren.
-- Contentcheck vóór publicatie (hook, helderheid, huisstijl).
+### Eigen contentskills ✅
+- Gebouwd: vacature → LinkedIn/Instagram-post (`vacature-post`) en contentcheck (`boom-contentcheck`). Zie Eva-skills.
+- Nog te bouwen: carrousel-builder in Boom-kleuren.
 - Inplannen via Meta Business Suite (officieel, gratis).
 
 ### JEV (TypeSafe) ⚙️
@@ -77,6 +84,13 @@ Status: ✅ standaard · ⚙️ bij voorwaarde · ⛔ afgeraden.
 - Niet als: direct installeren voor Nederlandse recruitmentcontent.
 
 ## Website-zichtbaarheid
+
+### GSC-vragenanalyse (eigen werk, skill `gsc-vragenanalyse`) ✅
+- Wat: vraag-zoekopdrachten uit Search Console (regex-filter, 3 mnd) exporteren; script rekent per vraag de potentie uit (extra klikken op positie 5) en stelt FAQ/titel/blog voor.
+- Gebruik als: site die al een paar maanden draait en vertoningen heeft (boomrecruitment.nl).
+- Niet als: nieuwe site zonder data (<500 vertoningen in 3 mnd).
+- Let op: de standaardexport koppelt zoekopdracht niet aan pagina; het script gokt op URL-woorden, controleer de top 5 in GSC.
+- Herkomst idee: gobigsystems (SEO-bureau, "verdubbel je verkeer" is marketing; techniek klopt).
 
 ### Vertaling + AI-zichtbaarheid (eigen werk, geen tool) ✅
 - Engelse (evt. Turkse) versie met hreflang, schema.org, llms.txt, FAQ- en dienstteksten.
@@ -109,6 +123,7 @@ Status: ✅ standaard · ⚙️ bij voorwaarde · ⛔ afgeraden.
 - Gebruik als: research op openbare bronnen (zero-config kanalen: web, YouTube, RSS, GitHub).
 - Niet als: inloggen met eigen hoofdaccounts. Scrapen via cookies is tegen de voorwaarden van LinkedIn/Instagram en kan tot blokkade leiden; LinkedIn-account is bedrijfskritisch.
 - Installatie: `pip install agent-reach && agent-reach install --env=auto`, daarna `agent-reach doctor`.
+- Let op (reel itstundeanthony, "comment agent"): X lezen gaat via een ingelogde browsersessie = zelfde cookie-risico. README-sponsor BrowserAct promoot LinkedIn-scraping: niet gebruiken.
 
 ## Beveiliging
 
@@ -116,7 +131,21 @@ Status: ✅ standaard · ⚙️ bij voorwaarde · ⛔ afgeraden.
 - Wat: agent die je eigen web-app aanvalt en lekken laat fixen (bv. API-keys in frontend, open endpoints).
 - Gebruik als: vóór livegang van sites met login, beheeromgeving, formulieren of persoonsgegevens (Carbutler, TTT, Autoradam Lease).
 - Niet als: op sites of systemen die niet van jou of je opdrachtgever zijn (illegaal).
-- Let op: exacte tool en herkomst eerst verifiëren voordat je installeert.
+- Let op: exacte tool en herkomst eerst verifiëren voordat je installeert. Nog niet gevonden; AgentShield (hieronder) is dit níet.
+
+### AgentShield (affaan-m/agentshield, uit ECC) ⚙️
+- Wat: scant je Claude Code-configuratie (`~/.claude/`, skills, hooks, MCP-servers, rechten) op hardcoded API-keys, te ruime rechten (bv. `Bash(*)`), hook-injectie en prompt-injectie in skills. Scant géén websites of apps.
+- Gebruik als: na het installeren van externe skills/MCP's, en periodiek op Eva's setup.
+- Niet als: je een website wilt pentesten (daarvoor is het niet gemaakt).
+- Let op: npm-uitgever geverifieerd (cogsec, me@affaanmustafa.com = maker repo). Alleen de lokale `scan`; de Opus-pipeline en de GitHub App sturen data naar buiten. Niet getest in de cloudsessie (externe code geblokkeerd): eerst zelf lokaal draaien.
+- Installatie/gebruik: `npx ecc-agentshield@1.6.0 scan` (zonder installatie).
+
+### ECC / Everything Claude Code (affaan-m/ECC, MIT) ⚙️
+- Wat: grote bundel (~71 agents, ~314 skills, hooks, geheugen) voor Claude Code; ~294K sterren.
+- Gebruik als: inspiratie voor eigen skills (bv. e2e-testing, search-first, code-review), of alleen AgentShield.
+- Niet als: volledige installatie naast Eva (botst met eigen skills/geheugen, vreet tegoed, grotendeels Django/Laravel/Swift).
+- Let op: /astra-review stuurt code naar OpenAI; ECC Pro ($19/seat/mnd) analyseert repo's op hun server; sponsors/affiliates in README. Niet plugin én installer tegelijk (dubbele hooks). Windows: sommige features vereisen WSL/Git Bash.
+- Installatie (als je toch wilt): `npx ecc-universal@2.2.3 install --profile minimal --target claude` (zonder hooks).
 
 ## Agent-platforms
 
@@ -151,6 +180,23 @@ Status: ✅ standaard · ⚙️ bij voorwaarde · ⛔ afgeraden.
 - Niet als: de taak kandidaatgegevens beoordeelt of selecteert (EU AI Act), of interactie op social media automatiseert (reageren, DM'en, volgen).
 - Let op: Eva stopt altijd vóór versturen, publiceren, betalen of verwijderen en vraagt eerst om OK; wachtwoorden en codes typt Erkan zelf en worden nooit opgeslagen; in het skillbestand staan geen persoonsgegevens, alleen stappen en plekken waar een waarde komt.
 - Vereist: Chrome DevTools MCP (zie Basis).
+
+### GSC-vragenanalyse (gsc-vragenanalyse) ✅
+- Wat: GSC-export (zip) → rapport met vragen, potentie, vermoedelijke pagina en actie; daarna FAQ-blokken, titels/meta's, blogideeën en FAQ-schema.
+- Vereist: Python 3 (alleen standaardbibliotheek). `python scripts/analyse.py export.zip --uit rapport.md`
+
+### Vacature → social post (vacature-post) ✅
+- Wat: vacature → LinkedIn-post, Instagram-caption en reel-data (JSON voor het Remotion-sjabloon), daarna automatisch contentcheck.
+- Let op: `references/boom-toon.md` aanvullen met 3–5 goed gelopen Boom-posts en de huisstijlkleuren; opdrachtgever standaard anoniem.
+
+### Contentcheck (boom-contentcheck) ✅
+- Wat: script + eigen oordeel vóór publicatie: lengte per platform, hook vóór "meer", call-to-action, placeholders, hashtags, en bij vacatures discriminerende taal (leeftijd, geslacht, afkomst, uiterlijk; AWGB) en salaris/uren.
+- Vereist: Python 3. `python scripts/check.py post.txt --platform linkedin --vacature`
+
+### Vacature-reel (templates/vacature-reel, Remotion) ✅
+- Wat: 9:16-reel: hook → functie/locatie → 3 pluspunten → salaris/uren → CTA + logo. Props uit `vacature-post`.
+- Gebruik: `npm install`, `vacature.json` vullen, `npm run render` → `out/vacature.mp4`. `npm run studio` om live te bekijken.
+- Let op: Boom-kleuren, lettertype en logo nog invullen (props `kleurPrimair` enz., logo in `public/`). Remotion-licentie: gratis t/m 3 medewerkers, daarboven bedrijfslicentie.
 
 ## Afgeraden ⛔
 
