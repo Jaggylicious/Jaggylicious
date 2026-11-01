@@ -127,11 +127,14 @@ Status: ✅ standaard · ⚙️ bij voorwaarde · ⛔ afgeraden.
 
 ## Beveiliging
 
-### AI-pentesttool (security-scan van eigen app) ⚙️
-- Wat: agent die je eigen web-app aanvalt en lekken laat fixen (bv. API-keys in frontend, open endpoints).
+### Site-securitycheck (eigen skill `site-securitycheck`) ✅
+- Wat: passieve check van eigen sites en code: gelekte keys/wachtwoorden (frontend = altijd kritiek), open .env/.git/back-ups, security-headers, http→https, sessiecookies, plus handmatige checklist (Supabase RLS, formulieren, beheer, AVG-uploads).
 - Gebruik als: vóór livegang van sites met login, beheeromgeving, formulieren of persoonsgegevens (Carbutler, TTT, Autoradam Lease).
-- Niet als: op sites of systemen die niet van jou of je opdrachtgever zijn (illegaal).
-- Let op: exacte tool en herkomst eerst verifiëren voordat je installeert. Nog niet gevonden; AgentShield (hieronder) is dit níet.
+- Niet als: op sites of systemen die niet van jou of je opdrachtgever zijn (illegaal); vervangt geen professionele pentest bij betalingen/veel persoonsgegevens.
+- Vereist: Python 3. `python scripts/securitycheck.py code <map>` en `... site https://<domein>`.
+
+### AI-pentesttool (actieve aanval op eigen app) ⚙️
+- Wat: agent die je eigen web-app actief aanvalt. Nog geen betrouwbare tool gevonden; AgentShield is dit níet. Tot die tijd: site-securitycheck hierboven.
 
 ### AgentShield (affaan-m/agentshield, uit ECC) ⚙️
 - Wat: scant je Claude Code-configuratie (`~/.claude/`, skills, hooks, MCP-servers, rechten) op hardcoded API-keys, te ruime rechten (bv. `Bash(*)`), hook-injectie en prompt-injectie in skills. Scant géén websites of apps.
@@ -192,6 +195,9 @@ Status: ✅ standaard · ⚙️ bij voorwaarde · ⛔ afgeraden.
 ### Contentcheck (boom-contentcheck) ✅
 - Wat: script + eigen oordeel vóór publicatie: lengte per platform, hook vóór "meer", call-to-action, placeholders, hashtags, en bij vacatures discriminerende taal (leeftijd, geslacht, afkomst, uiterlijk; AWGB) en salaris/uren.
 - Vereist: Python 3. `python scripts/check.py post.txt --platform linkedin --vacature`
+
+### Site-securitycheck (site-securitycheck) ✅
+- Zie Beveiliging.
 
 ### Vacature-reel (templates/vacature-reel, Remotion) ✅
 - Wat: 9:16-reel: hook → functie/locatie → 3 pluspunten → salaris/uren → CTA + logo. Props uit `vacature-post`.

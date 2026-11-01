@@ -7,7 +7,12 @@ description: Analyseert een Google Search Console-export op vraag-zoekopdrachten
 
 Doel: vragen vinden waarop een site al verschijnt in Google maar weinig klikken krijgt, en die vragen beter beantwoorden.
 
-## Stap 1 — Export ophalen (Erkan doet dit)
+## Stap 1 — Data ophalen
+
+**Route A (beste): via Composio-koppeling `google_search_console`.** Als die actief is:
+`GOOGLE_SEARCH_CONSOLE_LIST_SITES` → property exact overnemen → `GOOGLE_SEARCH_CONSOLE_SEARCH_ANALYTICS_QUERY` met `dimensions=["query","page"]`, de laatste 3 maanden, `row_limit` 5000. Pagineer met `start_row`. Optioneel: `dimension_filter_groups` met `includingRegex` en de regex hieronder. Schrijf de rijen naar een CSV met kolommen `query,page,clicks,impressions,ctr,position`. Het script geeft dan de **echte pagina** per vraag en meldt kannibalisatie (meerdere pagina's voor één vraag).
+
+**Route B: export (Erkan doet dit)**
 
 Leg dit uit als er nog geen export is:
 1. Search Console → **Prestaties → Zoekresultaten** → periode **3 maanden**.
@@ -34,10 +39,10 @@ Opties: `--min-vertoningen 20` (drempel), `--top 30`, `--alle` (niet filteren op
 Het script:
 - leest NL- en EN-exports (ook `1.240` en `0,24%`);
 - rekent per vraag de **potentie** uit: extra klikken als de vraag op positie 5 (of hoger) staat met een normale CTR;
-- gokt de **vermoedelijke pagina** op basis van woorden in de URL;
+- toont de **echte pagina** (route A) of gokt de **vermoedelijke pagina** op basis van woorden in de URL (route B);
 - geeft per vraag een actie: positie ≤10 → titel/meta + FAQ; 11–20 → FAQ-blok; >20 → nieuwe pagina/blog.
 
-**Eerlijk zijn over de pagina:** de standaardexport koppelt zoekopdrachten niet aan pagina's. Zeg dat erbij. Bij de top 5: laat Erkan in GSC controleren (filter Zoekopdracht = de vraag → tabblad Pagina's), of vraag een export per pagina.
+**Eerlijk zijn over de pagina (route B):** de standaardexport koppelt zoekopdrachten niet aan pagina's. Zeg dat erbij. Bij de top 5: laat Erkan in GSC controleren (filter Zoekopdracht = de vraag → tabblad Pagina's), of vraag een export per pagina.
 
 ## Stap 3 — Uitwerken
 

@@ -99,6 +99,10 @@ def lees_tabel(tekst, sleutel):
     idx = {s: kolom(header, s) for s in (sleutel, "klikken", "vertoningen", "ctr", "positie")}
     if idx[sleutel] is None or idx["vertoningen"] is None:
         return None
+    # Export met zowel zoekopdracht als pagina (API of Looker Studio): echte koppeling.
+    andere = kolom(header, "pagina" if sleutel == "query" else "query")
+    if sleutel == "pagina" and andere is not None:
+        return None
     uit = []
     for r in rijen[1:]:
         if len(r) <= idx[sleutel]:
@@ -106,8 +110,30 @@ def lees_tabel(tekst, sleutel):
         klik = getal(r[idx["klikken"]]) if idx["klikken"] is not None else 0
         vert = getal(r[idx["vertoningen"]])
         pos = getal(r[idx["positie"]]) if idx["positie"] is not None else 0
-        uit.append({sleutel: r[idx[sleutel]].strip(), "klikken": klik, "vertoningen": vert,
-                    "ctr": klik / vert if vert else 0.0, "positie": pos})
+        rij = {sleutel: r[idx[sleutel]].strip(), "klikken": klik, "vertoningen": vert,
+               "ctr": klik / vert if vert else 0.0, "positie": pos}
+        if sleutel == "query" and andere is not None and len(r) > andere:
+            rij["echte_pagina"] = r[andere].strip()
+        uit.append(rij)
+    return samenvoegen(uit) if sleutel == "query" and andere is not None else uit
+
+
+def samenvoegen(rijen):
+    """Rijen per (zoekopdracht, pagina) → één rij per zoekopdracht; pagina = die met de meeste vertoningen."""
+    per = {}
+    for r in rijen:
+        d = per.setdefault(r["query"], {"query": r["query"], "klikken": 0.0, "vertoningen": 0.0, "_w": 0.0, "_pag": {}})
+        d["klikken"] += r["klikken"]
+        d["vertoningen"] += r["vertoningen"]
+        d["_w"] += r["positie"] * r["vertoningen"]
+        d["_pag"][r["echte_pagina"]] = d["_pag"].get(r["echte_pagina"], 0) + r["vertoningen"]
+    uit = []
+    for d in per.values():
+        v = d["vertoningen"]
+        pag = sorted(d["_pag"].items(), key=lambda x: -x[1])
+        uit.append({"query": d["query"], "klikken": d["klikken"], "vertoningen": v,
+                    "ctr": d["klikken"] / v if v else 0.0, "positie": d["_w"] / v if v else 0.0,
+                    "echte_pagina": pag[0][0], "aantal_paginas": len(pag)})
     return uit
 
 
@@ -173,11 +199,15 @@ def main():
     for q in kandidaten:
         # Potentie: extra klikken als de vraag (minstens) op positie 5 komt met een passende CTR.
         q["gemist"] = max(0.0, q["vertoningen"] * (verwachte_ctr(min(q["positie"], 5)) - q["ctr"]))
-        q["pagina"] = vermoedelijke_pagina(q["query"], paginas) if paginas else None
+        if q.get("echte_pagina"):
+            q["pagina"] = q["echte_pagina"] + (f" (+{q['aantal_paginas'] - 1} andere)" if q["aantal_paginas"] > 1 else "")
+        else:
+            q["pagina"] = vermoedelijke_pagina(q["query"], paginas) if paginas else None
     kandidaten.sort(key=lambda q: (q["gemist"], q["vertoningen"]), reverse=True)
     top = kandidaten[: a.top]
 
     tot_vert = sum(q["vertoningen"] for q in queries)
+    echt = any(q.get("echte_pagina") for q in queries)
     regels = [
         "# GSC-vragenanalyse",
         "",
@@ -187,7 +217,7 @@ def main():
         "",
         "Potentie = extra klikken per periode als de vraag op positie 5 (of hoger) staat met een normale CTR. Grove indicatie.",
         "",
-        "| # | Vraag | Vert. | Klik | CTR | Pos. | Potentie | Vermoedelijke pagina | Actie |",
+        f"| # | Vraag | Vert. | Klik | CTR | Pos. | Potentie | {'Pagina' if echt else 'Vermoedelijke pagina'} | Actie |",
         "|---|---|---:|---:|---:|---:|---:|---|---|",
     ]
     for i, q in enumerate(top, 1):
@@ -198,11 +228,13 @@ def main():
         )
     if not top:
         regels.append("| – | Geen vragen gevonden boven de drempel | | | | | | | |")
-    regels += [
-        "",
+    regels += [""] + ([
+        "Pagina per vraag komt uit de data (meeste vertoningen). '+N andere' = meerdere pagina's concurreren "
+        "om dezelfde vraag (kannibalisatie): kies één pagina als antwoord en verwijs vanaf de andere."
+    ] if echt else [
         "Let op: de standaardexport koppelt zoekopdrachten niet aan pagina's. De pagina is een gok op woordoverlap "
         "met de URL. Controleer in GSC: filter Zoekopdracht = de vraag → tabblad Pagina's.",
-    ]
+    ])
     rapport = "\n".join(regels) + "\n"
     if a.uit:
         Path(a.uit).write_text(rapport, encoding="utf-8")
