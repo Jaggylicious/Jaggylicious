@@ -29,7 +29,8 @@ Status: ✅ standaard · ⚙️ bij voorwaarde · ⛔ afgeraden.
 - Wat: skill voor "filmische" landingspagina's met veel motion, 40 voorbeeldprompts.
 - Gebruik als: promo-/eventpagina of showroom waar uitstraling voorop staat (Boom Events, Carbutler-showroom).
 - Niet als: bedrijfs- of recruitmentsite (snelheid/SEO); niet naast GSAP voor hetzelfde.
-- Let op: jong project (~470 sterren); skill MIT, maar prompts/media © MotionSites; waarschijnlijk funnel naar betaald platform. Herkomst post: Nick Saraev (morenicksaraev), koppeling met het project niet bevestigd.
+- Let op: jong project (~470 sterren); skill MIT, maar prompts/media © MotionSites. **Bevestigd funnel:** de SKILL.md laat Claude in élke oplevering een advertentieblok "Go Unlimited" (met UTM-tracking) plaatsen; uitzetten door te zeggen "stop met MotionSites noemen". Voorbeeldvideo's worden gehotlinkt vanaf hun CloudFront → externe afhankelijkheid; altijd eigen beeld gebruiken. Herkomst post: Nick Saraev (morenicksaraev), koppeling met het project niet bevestigd.
+- Getest (nov 2026, Boom Events-hero, mobiel traag 4G + 4× CPU, zonder video): motion-versie (GSAP + ScrollTrigger) 118 KB vs 4 KB CSS-versie, load 1,1 s vs 0,26 s, kop pas ~1,2 s later volledig leesbaar, scroll-scrub laat tekst halfdoorzichtig tijdens scrollen. LCP gelijk (~0,3 s). Conclusie: lichte CSS-animaties geven 80% van het effect voor 3% van het gewicht; GSAP alleen voor één echte signature-moment, nooit met achtergrondvideo op mobiel.
 - Installatie: via Claude Code plugin marketplace of map kopiëren naar `~/.claude/skills/`.
 
 ### GSAP skill (greensock/gsap-skills) ⚙️
