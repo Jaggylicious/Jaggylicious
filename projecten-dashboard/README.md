@@ -20,6 +20,17 @@ Al je projecten op één plek: een bord (Idee → Gepland → Bezig → Wacht �
 4. **Mac:** open Terminal, typ `bash ` (met een spatie erachter), sleep `Installeer-Mac.command` in het venster en druk op Enter.
    De app komt in de map *Apps* in je thuismap. Sleep hem naar je Dock. Met Google Chrome geïnstalleerd opent hij in een eigen venster.
 
+## Gekoppeld aan je Claude-chats (gesynchroniseerde versie)
+Het dashboard leest je Claude Code-chats via de connector **Claude Code Remote** en houdt projecten automatisch bij:
+- **Per project** zie je de gekoppelde chats, wat Claude als laatste deed en een knop *Openen ↗* naar de chat.
+- **⏳ Claude wacht op jou**: projecten waar een chat op jouw antwoord of akkoord wacht, met de vraag erbij.
+- **Automatisch**: komt er nieuwe activiteit in een gekoppelde chat, dan wordt het project bijgewerkt en gaat het van Idee/Gepland naar *Bezig*. Stilgevallen = 14 dagen geen activiteit, ook niet in de chats.
+- **📥 Nieuwe chats**: chats die nog bij geen project horen. Claude stelt voor waar ze bij horen en koppelt de zekere gevallen zelf. De rest kies je, of je maakt er een nieuw project van, of je negeert losse vragen.
+- De eerste keer vraagt claude.ai of de pagina je chatlijst mag lezen en Claude mag gebruiken: kies *Toestaan*.
+- De lijst wordt elke 5 minuten ververst zolang de pagina open is.
+
+Gewone claude.ai-chats (buiten Claude Code) kan de pagina niet lezen: daar is geen koppeling voor.
+
 ## Handig
 - Sneltoetsen: `N` nieuw project · `/` zoeken · `Esc` sluiten.
 - Snelfilters: 🔥 Focus (hoge prioriteit + bezig), ⏰ deadline binnen 7 dagen, 💤 stilgevallen (14+ dagen niet bijgewerkt).

@@ -128,6 +128,27 @@ textarea.in{min-height:90px;resize:vertical}
 kbd{font:11px ui-monospace,monospace;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px;background:var(--panel)}
 .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30}
 .toast.on{opacity:1}
+/* Claude-chats */
+.n.wait{color:var(--red);-webkit-line-clamp:3}
+.tag.wait{background:var(--red-soft);color:var(--red)}
+.tag.chat{background:var(--accent-soft);color:var(--accent)}
+.chats{display:flex;flex-direction:column;gap:6px}
+.chat{border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:start}
+.chat b{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.chat .acts{display:flex;gap:6px;align-items:center;grid-row:span 2}
+.chat .acts a{color:var(--blue);font-size:12px;white-space:nowrap}
+.chat .acts button{border:0;background:none;color:var(--muted)}
+.chat .s{font-size:12px;color:var(--muted);min-width:0;overflow-wrap:anywhere}
+.chat .s.w{color:var(--red)}
+.inbox{display:flex;flex-direction:column;gap:8px}
+.irow{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.irow .txt{flex:1 1 260px;min-width:0}
+.irow .txt b{display:block}
+.irow .txt span{font-size:12px;color:var(--muted)}
+.irow select{max-width:240px}
+.sugg{font-size:12px;color:var(--accent)}
+.banner{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px}
+.banner.err{border-color:var(--red);background:var(--red-soft)}
 @media (max-width:900px){
   .app{grid-template-columns:1fr}
   aside{position:fixed;inset:0 auto 0 0;width:260px;z-index:25;transform:translateX(-100%);transition:transform .18s;padding-top:calc(14px + env(safe-area-inset-top,0px));padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
@@ -148,11 +169,14 @@ kbd{font:11px ui-monospace,monospace;border:1px solid var(--line);border-bottom-
     <div class="navh">Categorieën</div>
     <div id="cats"></div>
     <div class="navh">Snel</div>
+    <button class="nav" data-quick="inbox" id="nav-inbox" hidden>📥 Nieuwe chats <small id="c-inbox"></small></button>
+    <button class="nav" data-quick="wait" id="nav-wait" hidden>⏳ Claude wacht op jou <small id="c-wait"></small></button>
     <button class="nav" data-quick="focus">🔥 Focus (hoog + bezig) <small id="c-focus"></small></button>
     <button class="nav" data-quick="late">⏰ Deadline ≤ 7 dagen <small id="c-late"></small></button>
     <button class="nav" data-quick="stale">💤 Stilgevallen (&gt;14 d) <small id="c-stale"></small></button>
     <div class="side-foot">
       <span class="sync" id="sync"><i></i><span>Opgeslagen op dit apparaat</span></span>
+      <span class="sync" id="chatsync" hidden><i></i><span></span></span>
       <button id="exp">⬇︎ Back-up opslaan</button>
       <button id="imp">⬆︎ Back-up terugzetten</button>
       <input type="file" id="file" accept=".json" hidden>
@@ -173,6 +197,7 @@ kbd{font:11px ui-monospace,monospace;border:1px solid var(--line);border-bottom-
       <button class="btn primary" id="new">+ Nieuw project</button>
     </div>
     <div class="content">
+      <div id="banner"></div>
       <div class="stats" id="stats"></div>
       <div id="view"></div>
     </div>
@@ -191,6 +216,11 @@ kbd{font:11px ui-monospace,monospace;border:1px solid var(--line);border-bottom-
     </div>
     <label class="fl">➡️ Volgende stap</label>
     <input class="in" id="d-next" placeholder="Wat is het eerstvolgende concrete ding?">
+    <div id="d-chatbox" hidden>
+      <label class="fl">💬 Claude-chats <span id="d-chatcount"></span></label>
+      <div class="chats" id="d-chats"></div>
+      <select class="in" id="d-addchat" style="margin-top:6px"></select>
+    </div>
     <label class="fl">Taken <span id="d-prog"></span></label>
     <div class="tasks" id="d-tasks"></div>
     <input class="in" id="d-newtask" placeholder="+ Taak toevoegen (Enter)" style="margin-top:4px">
@@ -293,13 +323,111 @@ async function connect(){
   DB.collection("projects").onSnapshot(snap=>{
     clearTimeout(timer);S.loading=false;
     const local=Object.fromEntries(S.projects.map(p=>[p.id,p]));
-    S.projects=snap.docs.map(d=>pending[d.id]&&local[d.id]?local[d.id]:{...d.data(),id:d.id,tasks:[...(d.data().tasks||[])].map(t=>({...t})),links:[...(d.data().links||[])]});
+    S.projects=snap.docs.map(d=>pending[d.id]&&local[d.id]?local[d.id]:{tasks:[],links:[],sessions:[],...JSON.parse(JSON.stringify(d.data())),id:d.id});
     Object.keys(pending).forEach(id=>{if(!S.projects.find(p=>p.id===id)&&local[id])S.projects.unshift(local[id])});
     save();setSync("on","Gesynchroniseerd · telefoon & computer");
     render();
     if(S.open&&!cur())closeP();
   },e=>{clearTimeout(timer);S.loading=false;syncErr(e);render()});
+  try{DB.doc("settings/chats").onSnapshot(d=>{if(d.exists){C.ignored=[...((d.data()||{}).ignored||[])];saveChats();render()}},()=>{})}catch(e){console.error(e)}
 }
+/* ===== Claude-chats (Claude Code-sessies via de connector "Claude Code Remote") ===== */
+const SERVER="Claude Code Remote",CHATKEY="projecten-chats-v1";
+const C={on:false,list:[],byId:{},state:"",code:"",storedAt:0,ignored:[],sugg:{},mcp:null,sample:null,auto:false};
+try{const c=JSON.parse(localStorage.getItem(CHATKEY)||"null");if(c){C.list=c.list||[];C.ignored=c.ignored||[];C.storedAt=c.storedAt||0;C.byId=Object.fromEntries(C.list.map(s=>[s.id,s]))}}catch(e){}
+function saveChats(){try{localStorage.setItem(CHATKEY,JSON.stringify({list:C.list,ignored:C.ignored,storedAt:C.storedAt}))}catch(e){}}
+const chatUrl=id=>"https://claude.ai/code/"+encodeURIComponent(id);
+const sTime=s=>Date.parse(s.updated_at||s.created_at||0)||0;
+const isArchived=s=>/ARCHIVED/.test(s.session_status||"");
+const isBlocked=s=>/BLOCKED/.test(s.status_bucket||"")||/REQUIRES_ACTION/.test(s.session_status||"");
+const isWorking=s=>/WORKING|RUNNING/.test((s.status_bucket||"")+(s.session_status||""));
+const sSum=s=>(s.post_turn_summary&&(s.post_turn_summary.needs_action||s.post_turn_summary.recent_action))||"";
+function ago(ms){if(!ms)return"";const m=Math.round((Date.now()-ms)/6e4);if(m<1)return"zojuist";if(m<60)return m+" min geleden";const h=Math.round(m/60);if(h<24)return h+" uur geleden";const d=Math.round(h/24);return d===1?"gisteren":d+" dagen geleden"}
+const chatsOf=p=>(p.sessions||[]).map(id=>C.byId[id]).filter(Boolean).sort((a,b)=>sTime(b)-sTime(a));
+const waitingOf=p=>p.status==="Klaar"?[]:chatsOf(p).filter(s=>isBlocked(s)&&!isArchived(s));
+const linkedIds=()=>new Set(S.projects.flatMap(p=>p.sessions||[]));
+function inbox(){const l=linkedIds();return C.list.filter(s=>!isArchived(s)&&!l.has(s.id)&&!C.ignored.includes(s.id)).sort((a,b)=>sTime(b)-sTime(a))}
+function lastActivity(p){const t=Math.max(Date.parse(p.updated)||0,...chatsOf(p).map(sTime));return t}
+function setChatSync(cls,text){const el=$("#chatsync");el.hidden=false;el.className="sync "+cls;el.lastElementChild.textContent=text}
+function extractSessions(payload){
+  let x=payload;if(typeof x==="string"){try{x=JSON.parse(x)}catch(e){return null}}
+  if(!x||typeof x!=="object")return null;
+  const arr=Array.isArray(x)?x:(x.data||(x.ccr&&x.ccr.data)||x.sessions||null);
+  return Array.isArray(arr)?arr.filter(s=>s&&typeof s.id==="string").map(s=>({id:s.id,title:String(s.title||"Naamloze chat"),session_status:s.session_status||"",status_bucket:s.status_bucket||"",created_at:s.created_at||"",updated_at:s.updated_at||"",post_turn_summary:s.post_turn_summary?{needs_action:s.post_turn_summary.needs_action||"",recent_action:s.post_turn_summary.recent_action||""}:null})):null;
+}
+function onSessions(list,storedAt){
+  C.list=list;C.byId=Object.fromEntries(list.map(s=>[s.id,s]));C.storedAt=storedAt||Date.now();C.state="ok";C.code="";saveChats();
+  // Automatisch bijhouden: nieuwe activiteit in een gekoppelde chat zet een idee/gepland project op "Bezig".
+  S.projects.forEach(p=>{
+    const last=chatsOf(p)[0];if(!last)return;
+    const day=(last.updated_at||"").slice(0,10);
+    if(day&&day>(p.updated||"")){p.updated=day;if(p.status==="Idee"||p.status==="Gepland")p.status="Bezig";persist(p)}
+  });
+  setChatSync("on","Claude-chats bijgewerkt "+ago(C.storedAt));
+  render();if(S.open)drawChats(cur());
+  autoSuggest();
+}
+function onChatError(e){
+  const code=(e&&e.code)||"upstream_error";C.code=code;
+  if(["needs_reauth","server_not_connected","blocked_by_policy","approval_required","not_in_manifest","selection_required"].includes(code)){C.state="denied"}else if(!C.list.length)C.state="error";
+  setChatSync("err",{needs_reauth:"Claude-chats: opnieuw koppelen nodig",server_not_connected:"Claude-chats: connector niet gekoppeld",approval_required:"Claude-chats: toestemming nodig",not_in_manifest:"Claude-chats: geen toestemming"}[code]||"Claude-chats tijdelijk niet bereikbaar");
+  render();
+}
+async function connectChats(){
+  if(!ONLINE)return;
+  try{C.mcp=await window.claude.use("mcp")}catch(e){C.mcp=null}
+  try{C.sample=await window.claude.use("sample")}catch(e){C.sample=null}
+  if(!C.mcp){render();return}
+  C.on=true;$("#nav-inbox").hidden=false;$("#nav-wait").hidden=false;
+  setChatSync("","Claude-chats laden…");
+  C.mcp.watchTool(SERVER,"list_sessions",{limit:100},ev=>{
+    if(ev.type==="data"){const l=extractSessions(ev.result.payload);if(l)onSessions(l,ev.result.cache&&ev.result.cache.storedAt);else onChatError({code:"tool_error"})}
+    else onChatError(ev.error);
+  },{refetchInterval:300000,cache:{staleTime:60000,gcTime:7*864e5}});
+  render();
+}
+async function grantChats(){
+  try{const r=await C.mcp.callTool(SERVER,"list_sessions",{limit:100});const l=extractSessions(r.payload);if(l)onSessions(l,Date.now())}catch(e){onChatError(e)}
+}
+function persistIgnored(){saveChats();if(DB)DB.collection("settings").doc("chats").set({ignored:C.ignored}).catch(syncErr)}
+function linkChat(pid,sid){const p=S.projects.find(x=>x.id===pid);if(!p)return;p.sessions=[...new Set([...(p.sessions||[]),sid])];const s=C.byId[sid];if(s&&(s.updated_at||"").slice(0,10)>(p.updated||""))p.updated=s.updated_at.slice(0,10);delete C.sugg[sid];persist(p)}
+function unlinkChat(pid,sid){const p=S.projects.find(x=>x.id===pid);if(!p)return;p.sessions=(p.sessions||[]).filter(x=>x!==sid);persist(p)}
+function newFromChat(sid,name){
+  const s=C.byId[sid]||{};const ps=s.post_turn_summary||{};
+  const p={id:uid(),name:name||s.title||"Nieuw project",cat:"Overig",status:isWorking(s)||isBlocked(s)?"Bezig":"Idee",prio:"middel",next:ps.needs_action||"",tasks:[],notes:ps.recent_action?"Laatst in Claude: "+ps.recent_action:"",links:[],due:"",sessions:[sid],created:today(),updated:(s.updated_at||"").slice(0,10)||today()};
+  delete C.sugg[sid];S.projects.unshift(p);persist(p);return p;
+}
+/* Claude laat raden bij welk project een nieuwe chat hoort */
+async function suggest(manual){
+  const items=inbox().filter(s=>!C.sugg[s.id]).slice(0,40);
+  if(!C.sample||!items.length){if(manual)toast(items.length?"Claude is hier niet beschikbaar":"Alle chats hebben al een voorstel");return}
+  C.busy=true;render();
+  const projects=S.projects.filter(p=>p.status!=="Klaar").map(p=>({id:p.id,naam:p.name,categorie:p.cat,notitie:(p.notes||"").slice(0,160),chats:chatsOf(p).slice(0,4).map(s=>s.title)}));
+  const chats=items.map(s=>({id:s.id,titel:s.title,samenvatting:sSum(s).slice(0,220)}));
+  const prompt=`Je helpt een projectendashboard bijhouden. Hieronder staan bestaande projecten en nieuwe Claude-chats die nog niet gekoppeld zijn.
+Bepaal per chat bij welk bestaand project hij hoort. Hoort hij nergens bij maar is het duidelijk een eigen project, geef dan een korte Nederlandse projectnaam. Is het een losse vraag of gesprek zonder project, geef dan "los".
+Gebruik "hoog" als zekerheid alleen als titel of samenvatting duidelijk over hetzelfde onderwerp gaat.
+Antwoord alleen met JSON: {"koppelingen":[{"chat_id":"...","project_id":"... of null","nieuw_project":"naam of null","los":true/false,"zekerheid":"hoog"|"laag"}]}
+
+PROJECTEN:
+${JSON.stringify(projects)}
+
+NIEUWE CHATS:
+${JSON.stringify(chats)}`;
+  try{
+    const r=await C.sample.json(prompt,{modelTier:"default"});
+    const list=(r&&r.koppelingen)||[];let auto=0;
+    for(const k of list){
+      if(!k||!C.byId[k.chat_id])continue;
+      const valid=k.project_id&&S.projects.some(p=>p.id===k.project_id);
+      if(valid&&k.zekerheid==="hoog"){linkChat(k.project_id,k.chat_id);auto++;continue}
+      C.sugg[k.chat_id]=valid?{pid:k.project_id}:k.nieuw_project?{nieuw:String(k.nieuw_project).slice(0,80)}:k.los?{los:true}:{};
+    }
+    if(auto)toast(`Claude heeft ${auto} chat${auto>1?"s":""} automatisch gekoppeld`);
+  }catch(e){if(manual)toast(e&&e.code==="not_granted"?"Geen toestemming voor Claude op deze pagina":"Claude kon nu geen voorstel doen")}
+  C.busy=false;render();
+}
+function autoSuggest(){if(C.auto||!C.sample||!inbox().length)return;C.auto=true;setTimeout(()=>suggest(false),800)}
 function ask(text,yes="OK"){return new Promise(r=>{$("#m-text").textContent=text;$("#m-yes").textContent=yes;$("#modal").hidden=false;$("#m-yes").focus();
   const done=v=>{$("#modal").hidden=true;$("#m-yes").onclick=$("#m-no").onclick=null;r(v)};$("#m-yes").onclick=()=>done(true);$("#m-no").onclick=()=>done(false)})}
 const $=s=>document.querySelector(s);
@@ -307,7 +435,8 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const days=d=>d?Math.round((new Date(d)-new Date(today()))/864e5):null;
 const prog=p=>p.tasks.length?Math.round(p.tasks.filter(t=>t.d).length/p.tasks.length*100):(p.status==="Klaar"?100:0);
 const PR={hoog:0,middel:1,laag:2};
-const isStale=p=>p.status!=="Klaar"&&p.status!=="Idee"&&days(p.updated)<-14;
+const isStale=p=>p.status!=="Klaar"&&p.status!=="Idee"&&lastActivity(p)<Date.now()-14*864e5;
+const isWait=p=>waitingOf(p).length>0;
 const isSoon=p=>p.status!=="Klaar"&&p.due&&days(p.due)<=7;
 const isFocus=p=>p.prio==="hoog"&&p.status==="Bezig";
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("on"),1600)}
@@ -320,7 +449,8 @@ function filtered(){
     if(S.quick==="focus"&&!isFocus(p))return false;
     if(S.quick==="late"&&!isSoon(p))return false;
     if(S.quick==="stale"&&!isStale(p))return false;
-    if(q&&!(p.name+" "+p.cat+" "+p.next+" "+p.notes+" "+p.tasks.map(t=>t.t).join(" ")).toLowerCase().includes(q))return false;
+    if(S.quick==="wait"&&!isWait(p))return false;
+    if(q&&!(p.name+" "+p.cat+" "+p.next+" "+p.notes+" "+p.tasks.map(t=>t.t).join(" ")+" "+chatsOf(p).map(s=>s.title).join(" ")).toLowerCase().includes(q))return false;
     return true;
   });
 }
@@ -343,11 +473,11 @@ function dueTag(p){
   return `<span class="tag ${d<0?"late":d<=7?"soon":""}">📅 ${txt}</span>`;
 }
 function card(p){
-  const pr=prog(p);
+  const pr=prog(p),ch=chatsOf(p),w=waitingOf(p);
   return `<div class="card" draggable="true" data-id="${p.id}">
     <div class="t"><span class="prio p-${p.prio}" title="Prioriteit ${p.prio}"></span><span>${esc(p.name)}</span></div>
-    ${p.next?`<div class="n">➡️ ${esc(p.next)}</div>`:""}
-    <div class="meta"><span class="tag cat">${esc(p.cat)}</span>${dueTag(p)}${p.tasks.length?`<span class="tag">☑︎ ${p.tasks.filter(t=>t.d).length}/${p.tasks.length}</span>`:""}${isStale(p)?'<span class="tag late">💤 stil</span>':""}</div>
+    ${w.length?`<div class="n wait">⏳ Claude wacht: ${esc(sSum(w[0])||w[0].title)}</div>`:p.next?`<div class="n">➡️ ${esc(p.next)}</div>`:""}
+    <div class="meta"><span class="tag cat">${esc(p.cat)}</span>${dueTag(p)}${ch.length?`<span class="tag chat" title="Laatste activiteit in Claude">💬 ${ch.length} · ${esc(ago(sTime(ch[0])))}</span>`:""}${p.tasks.length?`<span class="tag">☑︎ ${p.tasks.filter(t=>t.d).length}/${p.tasks.length}</span>`:""}${isStale(p)?'<span class="tag late">💤 stil</span>':""}</div>
     ${p.tasks.length?`<div class="bar"><i style="width:${pr}%"></i></div>`:""}
   </div>`;
 }
@@ -363,6 +493,8 @@ function renderSide(){
   $("#c-focus").textContent=S.projects.filter(isFocus).length;
   $("#c-late").textContent=S.projects.filter(isSoon).length;
   $("#c-stale").textContent=S.projects.filter(isStale).length;
+  $("#c-inbox").textContent=inbox().length;
+  $("#c-wait").textContent=S.projects.filter(isWait).length;
 }
 function renderStats(){
   const ps=S.projects;
@@ -372,11 +504,12 @@ function renderStats(){
   const open=ps.filter(p=>p.status!=="Klaar");
   const tasks=open.flatMap(p=>p.tasks);
   const pct=tasks.length?Math.round(tasks.filter(t=>t.d).length/tasks.length*100):0;
+  const wait=ps.filter(isWait).length;
   $("#stats").innerHTML=`
     <button class="stat" data-q="focus"><b>${act}</b><span>Bezig · ${ps.filter(isFocus).length} met hoge prio</span></button>
     <button class="stat ${soon?"warn":""}" data-q="late"><b>${soon}</b><span>Deadline binnen 7 dagen</span></button>
     <button class="stat ${stale?"warn":""}" data-q="stale"><b>${stale}</b><span>Stilgevallen (&gt;14 dagen)</span></button>
-    <button class="stat" data-q=""><b>${pct}%</b><span>Taken af · ${open.length} open projecten</span></button>`;
+    ${C.on?`<button class="stat ${wait?"warn":""}" data-q="wait"><b>${wait}</b><span>Claude wacht op jou · ${inbox().length} nieuwe chats</span></button>`:`<button class="stat" data-q=""><b>${pct}%</b><span>Taken af · ${open.length} open projecten</span></button>`}`;
 }
 function renderBoard(list){
   const sts=S.showDone?STATUSES:STATUSES.filter(s=>s!=="Klaar");
@@ -395,12 +528,38 @@ function renderList(list){
 }
 function render(){
   renderSide();renderStats();
-  $("#title").textContent=S.quick?{focus:"🔥 Focus",late:"⏰ Deadlines",stale:"💤 Stilgevallen"}[S.quick]:(S.cat||"Alle projecten");
+  $("#title").textContent=S.quick?{focus:"🔥 Focus",late:"⏰ Deadlines",stale:"💤 Stilgevallen",wait:"⏳ Claude wacht op jou",inbox:"📥 Nieuwe chats"}[S.quick]:(S.cat||"Alle projecten");
+  renderBanner();
   document.querySelectorAll("#views button").forEach(b=>b.classList.toggle("on",b.dataset.v===S.view));
   if(S.loading){$("#view").innerHTML='<div class="empty">Projecten laden…</div>';return}
   if(!S.projects.length){$("#view").innerHTML='<div class="empty">Nog geen projecten. Klik op <b>+ Nieuw project</b> of druk op <kbd>N</kbd> om je eerste project toe te voegen.</div>';return}
+  if(S.quick==="inbox"){renderInbox();return}
   const list=filtered();
   S.view==="board"?renderBoard(list):renderList(list);
+}
+function renderBanner(){
+  let h="";
+  if(C.on&&C.state==="denied"){
+    const msg={needs_reauth:`De koppeling met ${SERVER} is verlopen. Koppel hem opnieuw in claude.ai → Instellingen → Connectors.`,
+      server_not_connected:`Voeg de connector <b>${SERVER}</b> toe in claude.ai → Instellingen → Connectors om je chats te koppelen.`,
+      blocked_by_policy:"Je organisatie staat het lezen van chats op deze pagina niet toe.",
+      selection_required:`Kies welke ${SERVER}-connector deze pagina mag gebruiken (claude.ai vraagt dit bij het openen).`}[C.code];
+    h=`<div class="banner err">${msg||"Deze pagina heeft nog geen toestemming om je Claude-chats te lezen."}${msg?"":' <button class="btn" id="grant">Toegang geven</button>'}</div>`;
+  }else if(C.on&&C.state==="error"){h='<div class="banner err">Je Claude-chats zijn nu niet bereikbaar. De pagina probeert het over een paar minuten opnieuw.</div>'}
+  else if(!ONLINE&&S.quick!=="inbox"){h=""}
+  $("#banner").innerHTML=h;
+}
+function renderInbox(){
+  const items=inbox();
+  const opts=pid=>`<option value="">Koppelen aan…</option>${S.projects.filter(p=>p.status!=="Klaar").sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<option value="${p.id}"${pid===p.id?" selected":""}>${esc(p.name)}</option>`).join("")}<option value="__new">＋ Nieuw project van deze chat</option>`;
+  const head=`<div class="banner"><span style="flex:1;min-width:200px">Chats die nog bij geen project horen. Kies een project, maak er een nieuw project van, of negeer losse vragen.${C.storedAt?` <span class="hint">Bijgewerkt ${esc(ago(C.storedAt))}.</span>`:""}</span>${C.sample?`<button class="btn primary" id="suggest"${C.busy?" disabled":""}>${C.busy?"Claude denkt na…":"✨ Laat Claude koppelen"}</button>`:""}${items.some(s=>C.sugg[s.id])?'<button class="btn" id="acceptall">Alle voorstellen overnemen</button>':""}</div>`;
+  if(!C.on){$("#view").innerHTML='<div class="empty">Chats koppelen werkt in de gesynchroniseerde versie op claude.ai.</div>';return}
+  if(!items.length){$("#view").innerHTML=head.replace(/<button class="btn" id="acceptall">.*?<\/button>/,"")+'<div class="empty">Alle chats zijn gekoppeld. Nieuwe chats verschijnen hier vanzelf.</div>';return}
+  $("#view").innerHTML=head+`<div class="inbox">${items.map(s=>{const g=C.sugg[s.id]||{};const gp=g.pid&&S.projects.find(p=>p.id===g.pid);
+    return `<div class="irow" data-sid="${esc(s.id)}"><div class="txt"><b>${esc(s.title)}</b><span>${esc(ago(sTime(s)))}${isBlocked(s)?" · ⏳ wacht op jou":""}${sSum(s)?" · "+esc(sSum(s)):""}</span>${gp?`<div class="sugg">✨ Voorstel: ${esc(gp.name)}</div>`:g.nieuw?`<div class="sugg">✨ Voorstel: nieuw project "${esc(g.nieuw)}"</div>`:g.los?'<div class="sugg">✨ Voorstel: losse vraag, negeren</div>':""}</div>
+      <select class="f" data-act="assign">${opts(gp?gp.id:"")}</select>
+      <a class="btn" href="${chatUrl(s.id)}" target="_blank" rel="noopener">Openen ↗</a>
+      <button class="btn" data-act="ignore">Negeren</button></div>`}).join("")}</div>`;
 }
 
 /* drawer */
@@ -411,9 +570,21 @@ function openP(id){
   $("#d-status").innerHTML=STATUSES.map(s=>`<option${s===p.status?" selected":""}>${s}</option>`).join("");
   $("#d-prio").value=p.prio;$("#d-cat").value=p.cat;$("#d-due").value=p.due||"";
   $("#d-next").value=p.next||"";$("#d-notes").value=p.notes||"";$("#d-links").value=(p.links||[]).join("\n");
-  drawTasks(p);drawLinks(p);
+  drawTasks(p);drawLinks(p);drawChats(p);
   $("#d-dates").textContent=`Aangemaakt ${p.created} · laatst bijgewerkt ${p.updated}`;
   $("#drawer").classList.add("on");$("#scrim").classList.add("on");
+}
+function drawChats(p){
+  if(!p)return;$("#d-chatbox").hidden=!C.on;if(!C.on)return;
+  const ch=chatsOf(p),missing=(p.sessions||[]).filter(id=>!C.byId[id]).length;
+  $("#d-chatcount").textContent=ch.length?"· laatste activiteit "+ago(sTime(ch[0])):"";
+  $("#d-chats").innerHTML=ch.map(s=>`<div class="chat" data-sid="${esc(s.id)}"><b>${esc(s.title)}</b><span class="acts"><a href="${chatUrl(s.id)}" target="_blank" rel="noopener">Openen ↗</a><button data-act="unlink" title="Ontkoppelen" aria-label="Ontkoppelen">✕</button></span>
+    <span class="s${isBlocked(s)?" w":""}">${isBlocked(s)?"⏳ Wacht op jou: ":isWorking(s)?"● Bezig · ":""}${esc(sSum(s)||"Geen samenvatting")} · ${esc(ago(sTime(s)))}</span></div>`).join("")
+    +(missing?`<span class="hint">${missing} gekoppelde chat${missing>1?"s":""} niet (meer) gevonden.</span>`:"")
+    +(ch.length||missing?"":'<span class="hint">Nog geen chats gekoppeld.</span>');
+  const linked=linkedIds();
+  const free=C.list.filter(s=>!isArchived(s)&&!linked.has(s.id)).sort((a,b)=>sTime(b)-sTime(a));
+  $("#d-addchat").innerHTML=`<option value="">＋ Chat koppelen…</option>`+free.map(s=>`<option value="${esc(s.id)}">${esc(s.title)} · ${esc(ago(sTime(s)))}</option>`).join("");
 }
 function closeP(){S.open=null;$("#drawer").classList.remove("on");$("#scrim").classList.remove("on");render()}
 const cur=()=>S.projects.find(x=>x.id===S.open);
@@ -434,11 +605,24 @@ $("#d-newtask").addEventListener("keydown",e=>{if(e.key!=="Enter"||!e.target.val
 $("#d-tasks").addEventListener("change",e=>{const p=cur(),row=e.target.closest(".task"),t=p.tasks.find(x=>x.id===row.dataset.tid);if(e.target.type==="checkbox"){t.d=e.target.checked;touch(p);drawTasks(p)}});
 $("#d-tasks").addEventListener("input",e=>{if(e.target.type!=="text")return;const p=cur(),t=p.tasks.find(x=>x.id===e.target.closest(".task").dataset.tid);t.t=e.target.value;touch(p)});
 $("#d-tasks").addEventListener("click",e=>{if(!e.target.classList.contains("x"))return;const p=cur();p.tasks=p.tasks.filter(x=>x.id!==e.target.closest(".task").dataset.tid);touch(p);drawTasks(p)});
+$("#d-addchat").addEventListener("change",e=>{const p=cur();if(!p||!e.target.value)return;linkChat(p.id,e.target.value);drawChats(p);render();toast("Chat gekoppeld")});
+$("#d-chats").addEventListener("click",e=>{const b=e.target.closest("[data-act=unlink]");if(!b)return;const p=cur();unlinkChat(p.id,b.closest(".chat").dataset.sid);drawChats(p);render()});
+$("#view").addEventListener("change",e=>{
+  const sel=e.target.closest("[data-act=assign]");if(!sel||!sel.value)return;const sid=sel.closest(".irow").dataset.sid;
+  if(sel.value==="__new"){const p=newFromChat(sid);render();openP(p.id);toast("Nieuw project gemaakt")}else{linkChat(sel.value,sid);render();toast("Gekoppeld")}
+});
+$("#view").addEventListener("click",e=>{
+  const ig=e.target.closest("[data-act=ignore]");
+  if(ig){const sid=ig.closest(".irow").dataset.sid;C.ignored=[...new Set([...C.ignored,sid])];delete C.sugg[sid];persistIgnored();render();return}
+  if(e.target.closest("#suggest")){suggest(true);return}
+  if(e.target.closest("#acceptall")){let n=0;inbox().forEach(s=>{const g=C.sugg[s.id];if(!g)return;n++;if(g.pid)linkChat(g.pid,s.id);else if(g.nieuw)newFromChat(s.id,g.nieuw);else if(g.los){C.ignored.push(s.id)}});persistIgnored();render();toast(n+" voorstellen overgenomen");return}
+});
+$("#banner").addEventListener("click",e=>{if(e.target.closest("#grant"))grantChats()});
 $("#d-close").onclick=closeP;$("#scrim").onclick=closeP;
 $("#d-del").onclick=async()=>{const p=cur();if(!p)return;if(await ask(`"${p.name||"Naamloos project"}" verwijderen? Dit kan niet ongedaan worden gemaakt.`,"Verwijderen")){S.projects=S.projects.filter(x=>x.id!==p.id);save();removeRemote(p.id);closeP();toast("Verwijderd")}};
 
 function newP(){
-  const p={id:uid(),name:"",cat:S.cat||"Overig",status:"Idee",prio:"middel",next:"",tasks:[],notes:"",links:[],due:"",created:today(),updated:today()};
+  const p={id:uid(),name:"",cat:S.cat||"Overig",status:"Idee",prio:"middel",next:"",tasks:[],notes:"",links:[],sessions:[],due:"",created:today(),updated:today()};
   S.projects.unshift(p);persist(p);render();openP(p.id);setTimeout(()=>$("#d-name").focus(),50);
 }
 
@@ -490,7 +674,7 @@ $("#file").onchange=e=>{const f=e.target.files[0];e.target.value="";if(!f)return
   S.projects.forEach(persist);render();toast("Teruggezet");
 })};
 
-load();render();connect();
+load();render();connect();connectChats();
 </script>
 </body>
 </html>
