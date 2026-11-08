@@ -8,19 +8,25 @@
 :root{
   --bg:#f6f7f9;--panel:#fff;--panel2:#f1f3f6;--line:#e3e6eb;--text:#1b1f27;--muted:#6b7280;
   --accent:#2f6f4f;--accent-soft:#e3f0e8;--red:#c2410c;--red-soft:#fdecdf;--amber:#a16207;--amber-soft:#fdf4d8;
-  --blue:#1d4ed8;--blue-soft:#e3ebfd;--gray-soft:#eceef2;--shadow:0 1px 2px rgba(0,0,0,.05);
+  --blue:#1d4ed8;--blue-soft:#e3ebfd;--gray-soft:#eceef2;--shadow:0 1px 2px rgba(0,0,0,.05);--on-accent:#fff;
 }
-@media (prefers-color-scheme:dark){:root{
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#111418;--panel:#181c22;--panel2:#1f242b;--line:#2a3039;--text:#e6e9ee;--muted:#8b93a1;
   --accent:#5fbf8a;--accent-soft:#1d3327;--red:#f08a5d;--red-soft:#3a2219;--amber:#e0b54a;--amber-soft:#352c14;
-  --blue:#7ea2ff;--blue-soft:#1c2540;--gray-soft:#252b33;--shadow:none;
+  --blue:#7ea2ff;--blue-soft:#1c2540;--gray-soft:#252b33;--shadow:none;--on-accent:#0d1a12;color-scheme:dark;
 }}
+:root[data-theme="dark"]{
+  --bg:#111418;--panel:#181c22;--panel2:#1f242b;--line:#2a3039;--text:#e6e9ee;--muted:#8b93a1;
+  --accent:#5fbf8a;--accent-soft:#1d3327;--red:#f08a5d;--red-soft:#3a2219;--amber:#e0b54a;--amber-soft:#352c14;
+  --blue:#7ea2ff;--blue-soft:#1c2540;--gray-soft:#252b33;--shadow:none;--on-accent:#0d1a12;color-scheme:dark;
+}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{margin:0;height:100%}
 body{background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
-.app{display:grid;grid-template-columns:220px 1fr;height:100vh}
+.app{display:grid;grid-template-columns:220px 1fr;height:100%}
 /* sidebar */
 aside{background:var(--panel);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:2px;overflow:auto}
 .brand{font-weight:700;font-size:15px;padding:4px 8px 12px;display:flex;align-items:center;gap:8px}
@@ -34,16 +40,26 @@ aside{background:var(--panel);border-right:1px solid var(--line);padding:14px 10
 .side-foot button{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:6px 8px;text-align:left}
 /* main */
 main{overflow:auto;display:flex;flex-direction:column}
-.top{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:12px 20px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:12px 20px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .top h1{font-size:18px;margin:0 12px 0 0}
+#menu{display:none}
 .search{flex:1;min-width:160px;max-width:340px;border:1px solid var(--line);background:var(--panel);border-radius:7px;padding:7px 10px}
 .seg{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:var(--panel)}
 .seg button{border:0;background:none;padding:6px 12px}
 .seg button.on{background:var(--panel2);font-weight:600}
 select.f{border:1px solid var(--line);background:var(--panel);border-radius:7px;padding:6px 8px}
 .btn{border:1px solid var(--line);background:var(--panel);border-radius:7px;padding:7px 12px}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
-@media (prefers-color-scheme:dark){.btn.primary{color:#0d1a12}}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+.btn.danger-fill{background:var(--red);border-color:var(--red);color:var(--on-accent);font-weight:600}
+.sync{font-size:12px;color:var(--muted);padding:6px 8px;display:flex;gap:6px;align-items:center}
+.sync i{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
+.sync.on i{background:var(--accent)}.sync.err i{background:var(--red)}
+.modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35);z-index:40;padding:16px}
+.modal>div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;max-width:380px;width:100%}
+.modal p{margin:0 0 14px}
+.modal .row{display:flex;gap:8px;justify-content:flex-end}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 .content{padding:16px 20px 40px}
 /* stats */
 .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px}
@@ -114,7 +130,9 @@ kbd{font:11px ui-monospace,monospace;border:1px solid var(--line);border-bottom-
 .toast.on{opacity:1}
 @media (max-width:900px){
   .app{grid-template-columns:1fr}
-  aside{display:none}
+  aside{position:fixed;inset:0 auto 0 0;width:260px;z-index:25;transform:translateX(-100%);transition:transform .18s;padding-top:calc(14px + env(safe-area-inset-top,0px));padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+  aside.on{transform:none;box-shadow:0 0 0 100vmax rgba(0,0,0,.3)}
+  #menu{display:inline-block!important}
   .stats{grid-template-columns:repeat(2,1fr)}
   .board{grid-template-columns:repeat(5,minmax(220px,80vw));overflow-x:auto}
   .content,.top{padding-left:16px;padding-right:16px}
@@ -124,7 +142,7 @@ kbd{font:11px ui-monospace,monospace;border:1px solid var(--line);border-bottom-
 </head>
 <body>
 <div class="app">
-  <aside>
+  <aside id="side">
     <div class="brand"><i></i>Projecten</div>
     <button class="nav on" data-cat="">Alle projecten <small id="c-all"></small></button>
     <div class="navh">Categorieën</div>
@@ -134,6 +152,7 @@ kbd{font:11px ui-monospace,monospace;border:1px solid var(--line);border-bottom-
     <button class="nav" data-quick="late">⏰ Deadline ≤ 7 dagen <small id="c-late"></small></button>
     <button class="nav" data-quick="stale">💤 Stilgevallen (&gt;14 d) <small id="c-stale"></small></button>
     <div class="side-foot">
+      <span class="sync" id="sync"><i></i><span>Opgeslagen op dit apparaat</span></span>
       <button id="exp">⬇︎ Back-up opslaan</button>
       <button id="imp">⬆︎ Back-up terugzetten</button>
       <input type="file" id="file" accept=".json" hidden>
@@ -142,6 +161,7 @@ kbd{font:11px ui-monospace,monospace;border:1px solid var(--line);border-bottom-
   </aside>
   <main>
     <div class="top">
+      <button class="btn" id="menu" aria-label="Menu">☰</button>
       <h1 id="title">Alle projecten</h1>
       <input class="search" id="q" placeholder="Zoeken… ( / )">
       <div class="seg" id="views">
@@ -184,6 +204,7 @@ kbd{font:11px ui-monospace,monospace;border:1px solid var(--line);border-bottom-
   <div class="df"><button class="btn danger" id="d-del">Verwijderen</button><span class="hint" style="align-self:center">Wordt automatisch opgeslagen</span></div>
 </div>
 <div class="toast" id="toast"></div>
+<div class="modal" id="modal" hidden><div><p id="m-text"></p><div class="row"><button class="btn" id="m-no">Annuleren</button><button class="btn danger-fill" id="m-yes">OK</button></div></div></div>
 
 <script>
 const STATUSES=["Idee","Gepland","Bezig","Wacht","Klaar"];
@@ -239,15 +260,48 @@ function seed(){
   ];
 }
 
-let S={projects:[],view:"board",cat:"",quick:"",q:"",prio:"",showDone:false,sort:"prio",open:null};
+let S={projects:[],view:"board",cat:"",quick:"",q:"",prio:"",showDone:false,sort:"prio",open:null,loading:false};
+/* Opslag: altijd lokaal (snel/offline). Online (claude.ai) ook in de gedeelde database → zelfde data op telefoon en computer. */
+const ONLINE=!!(window.claude&&window.claude.use);
+let DB=null,DL=null;const pending={};
 function load(){
   let data=null;
   try{data=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){}
-  S.projects=data&&Array.isArray(data.projects)?data.projects:seed();
+  if(data&&Array.isArray(data.projects))S.projects=data.projects;
+  else if(ONLINE){S.projects=[];S.loading=true}
+  else S.projects=seed();
   if(data&&data.view)S.view=data.view;
   save();
 }
 function save(){try{localStorage.setItem(KEY,JSON.stringify({projects:S.projects,view:S.view}))}catch(e){}}
+function setSync(state,text){const el=$("#sync");el.className="sync "+state;el.lastElementChild.textContent=text}
+function syncErr(e){console.error(e);setSync("err",e&&e.code==="quota_exceeded"?"Database vol – maak een back-up":"Synchroniseren mislukt – opgeslagen op dit apparaat")}
+function persist(p){
+  save();
+  if(!DB)return;
+  clearTimeout(pending[p.id]);
+  pending[p.id]=setTimeout(()=>{delete pending[p.id];const {id,...body}=p;DB.collection("projects").doc(id).set(JSON.parse(JSON.stringify(body))).then(()=>setSync("on","Gesynchroniseerd")).catch(syncErr)},500);
+}
+function removeRemote(id){clearTimeout(pending[id]);delete pending[id];if(DB)DB.collection("projects").doc(id).delete().catch(syncErr)}
+async function connect(){
+  if(!ONLINE)return;
+  const timer=setTimeout(()=>{if(S.loading){S.loading=false;render()}},10000);
+  try{DB=await window.claude.use("db")}catch(e){DB=null}
+  try{DL=await window.claude.use("downloads")}catch(e){DL=null}
+  if(!DB){clearTimeout(timer);S.loading=false;setSync("","Alleen op dit apparaat");render();return}
+  setSync("on","Verbinden…");
+  DB.collection("projects").onSnapshot(snap=>{
+    clearTimeout(timer);S.loading=false;
+    const local=Object.fromEntries(S.projects.map(p=>[p.id,p]));
+    S.projects=snap.docs.map(d=>pending[d.id]&&local[d.id]?local[d.id]:{...d.data(),id:d.id,tasks:[...(d.data().tasks||[])].map(t=>({...t})),links:[...(d.data().links||[])]});
+    Object.keys(pending).forEach(id=>{if(!S.projects.find(p=>p.id===id)&&local[id])S.projects.unshift(local[id])});
+    save();setSync("on","Gesynchroniseerd · telefoon & computer");
+    render();
+    if(S.open&&!cur())closeP();
+  },e=>{clearTimeout(timer);S.loading=false;syncErr(e);render()});
+}
+function ask(text,yes="OK"){return new Promise(r=>{$("#m-text").textContent=text;$("#m-yes").textContent=yes;$("#modal").hidden=false;$("#m-yes").focus();
+  const done=v=>{$("#modal").hidden=true;$("#m-yes").onclick=$("#m-no").onclick=null;r(v)};$("#m-yes").onclick=()=>done(true);$("#m-no").onclick=()=>done(false)})}
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const days=d=>d?Math.round((new Date(d)-new Date(today()))/864e5):null;
@@ -343,6 +397,8 @@ function render(){
   renderSide();renderStats();
   $("#title").textContent=S.quick?{focus:"🔥 Focus",late:"⏰ Deadlines",stale:"💤 Stilgevallen"}[S.quick]:(S.cat||"Alle projecten");
   document.querySelectorAll("#views button").forEach(b=>b.classList.toggle("on",b.dataset.v===S.view));
+  if(S.loading){$("#view").innerHTML='<div class="empty">Projecten laden…</div>';return}
+  if(!S.projects.length){$("#view").innerHTML='<div class="empty">Nog geen projecten. Klik op <b>+ Nieuw project</b> of druk op <kbd>N</kbd> om je eerste project toe te voegen.</div>';return}
   const list=filtered();
   S.view==="board"?renderBoard(list):renderList(list);
 }
@@ -361,7 +417,7 @@ function openP(id){
 }
 function closeP(){S.open=null;$("#drawer").classList.remove("on");$("#scrim").classList.remove("on");render()}
 const cur=()=>S.projects.find(x=>x.id===S.open);
-function touch(p){p.updated=today();save();$("#d-dates").textContent=`Aangemaakt ${p.created} · laatst bijgewerkt ${p.updated}`}
+function touch(p){p.updated=today();persist(p);$("#d-dates").textContent=`Aangemaakt ${p.created} · laatst bijgewerkt ${p.updated}`}
 function drawTasks(p){
   $("#d-prog").textContent=p.tasks.length?`· ${p.tasks.filter(t=>t.d).length}/${p.tasks.length}`:"";
   $("#d-tasks").innerHTML=p.tasks.map(t=>`<div class="task${t.d?" done":""}" data-tid="${t.id}"><input type="checkbox"${t.d?" checked":""}><input type="text" value="${esc(t.t)}"><button class="x" title="Verwijder">✕</button></div>`).join("");
@@ -379,11 +435,11 @@ $("#d-tasks").addEventListener("change",e=>{const p=cur(),row=e.target.closest("
 $("#d-tasks").addEventListener("input",e=>{if(e.target.type!=="text")return;const p=cur(),t=p.tasks.find(x=>x.id===e.target.closest(".task").dataset.tid);t.t=e.target.value;touch(p)});
 $("#d-tasks").addEventListener("click",e=>{if(!e.target.classList.contains("x"))return;const p=cur();p.tasks=p.tasks.filter(x=>x.id!==e.target.closest(".task").dataset.tid);touch(p);drawTasks(p)});
 $("#d-close").onclick=closeP;$("#scrim").onclick=closeP;
-$("#d-del").onclick=()=>{const p=cur();if(confirm(`"${p.name}" verwijderen?`)){S.projects=S.projects.filter(x=>x.id!==p.id);save();closeP();toast("Verwijderd")}};
+$("#d-del").onclick=async()=>{const p=cur();if(!p)return;if(await ask(`"${p.name||"Naamloos project"}" verwijderen? Dit kan niet ongedaan worden gemaakt.`,"Verwijderen")){S.projects=S.projects.filter(x=>x.id!==p.id);save();removeRemote(p.id);closeP();toast("Verwijderd")}};
 
 function newP(){
   const p={id:uid(),name:"",cat:S.cat||"Overig",status:"Idee",prio:"middel",next:"",tasks:[],notes:"",links:[],due:"",created:today(),updated:today()};
-  S.projects.unshift(p);save();render();openP(p.id);setTimeout(()=>$("#d-name").focus(),50);
+  S.projects.unshift(p);persist(p);render();openP(p.id);setTimeout(()=>$("#d-name").focus(),50);
 }
 
 /* events */
@@ -395,12 +451,15 @@ document.addEventListener("click",e=>{
   const th=e.target.closest("th[data-sort]");if(th){S.sort=th.dataset.sort;render();return}
   const v=e.target.closest("#views button");if(v){S.view=v.dataset.v;save();render()}
 });
+$("#menu").onclick=e=>{e.stopPropagation();$("#side").classList.toggle("on")};
+document.addEventListener("click",e=>{if(!e.target.closest("#side")||e.target.closest(".nav"))$("#side").classList.remove("on")},true);
 $("#q").addEventListener("input",e=>{S.q=e.target.value;render()});
 $("#fprio").addEventListener("change",e=>{S.prio=e.target.value;render()});
 $("#showdone").addEventListener("change",e=>{S.showDone=e.target.checked;render()});
 $("#new").onclick=newP;
 document.addEventListener("keydown",e=>{
   const typing=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+  if(!$("#modal").hidden){if(e.key==="Escape")$("#m-no").click();return}
   if(e.key==="Escape"){if(S.open)closeP();else if(typing)document.activeElement.blur();return}
   if(typing)return;
   if(e.key==="/"){e.preventDefault();$("#q").focus()}
@@ -410,13 +469,28 @@ document.addEventListener("keydown",e=>{
 document.addEventListener("dragstart",e=>{const c=e.target.closest(".card");if(!c)return;e.dataTransfer.setData("text/plain",c.dataset.id);c.classList.add("dragging")});
 document.addEventListener("dragend",e=>{const c=e.target.closest(".card");if(c)c.classList.remove("dragging")});
 document.addEventListener("dragover",e=>{const col=e.target.closest(".col");if(!col)return;e.preventDefault();document.querySelectorAll(".col.drop").forEach(x=>x!==col&&x.classList.remove("drop"));col.classList.add("drop")});
-document.addEventListener("drop",e=>{const col=e.target.closest(".col");document.querySelectorAll(".col.drop").forEach(x=>x.classList.remove("drop"));if(!col)return;e.preventDefault();const p=S.projects.find(x=>x.id===e.dataTransfer.getData("text/plain"));if(p&&p.status!==col.dataset.status){p.status=col.dataset.status;p.updated=today();save();render();toast(`→ ${p.status}`)}});
+document.addEventListener("drop",e=>{const col=e.target.closest(".col");document.querySelectorAll(".col.drop").forEach(x=>x.classList.remove("drop"));if(!col)return;e.preventDefault();const p=S.projects.find(x=>x.id===e.dataTransfer.getData("text/plain"));if(p&&p.status!==col.dataset.status){p.status=col.dataset.status;p.updated=today();persist(p);render();toast(`→ ${p.status}`)}});
 /* backup */
-$("#exp").onclick=()=>{const b=new Blob([JSON.stringify({projects:S.projects},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`projecten-backup-${today()}.json`;a.click();toast("Back-up opgeslagen")};
+$("#exp").onclick=async()=>{
+  const json=JSON.stringify({projects:S.projects},null,2),name=`projecten-backup-${today()}.json`;
+  if(ONLINE){
+    if(!DL){toast("Downloaden kan hier niet – gebruik de app op je computer");return}
+    try{await DL.save({filename:name,data:json});toast("Back-up opgeslagen")}catch(e){toast(e&&e.code==="declined"?"Geannuleerd":"Back-up opslaan mislukt")}
+    return;
+  }
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([json],{type:"application/json"}));a.download=name;a.click();toast("Back-up opgeslagen");
+};
 $("#imp").onclick=()=>$("#file").click();
-$("#file").onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!Array.isArray(d.projects))throw 0;if(confirm(`${d.projects.length} projecten terugzetten? Huidige lijst wordt vervangen.`)){S.projects=d.projects;save();render();toast("Teruggezet")}}catch(_){alert("Dit is geen geldig back-upbestand.")}});e.target.value=""};
+$("#file").onchange=e=>{const f=e.target.files[0];e.target.value="";if(!f)return;f.text().then(async t=>{
+  let d;try{d=JSON.parse(t);if(!Array.isArray(d.projects))throw 0}catch(_){toast("Dit is geen geldig back-upbestand");return}
+  if(!await ask(`${d.projects.length} projecten terugzetten? De huidige lijst wordt vervangen.`,"Terugzetten"))return;
+  const old=S.projects.map(p=>p.id);
+  S.projects=d.projects.map(p=>({id:p.id||uid(),name:"",cat:"Overig",status:"Idee",prio:"middel",next:"",tasks:[],notes:"",links:[],due:"",created:today(),updated:today(),...p}));
+  old.filter(id=>!S.projects.find(p=>p.id===id)).forEach(removeRemote);
+  S.projects.forEach(persist);render();toast("Teruggezet");
+})};
 
-load();render();
+load();render();connect();
 </script>
 </body>
 </html>
