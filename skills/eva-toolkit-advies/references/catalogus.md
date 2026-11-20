@@ -5,6 +5,13 @@ Status: ✅ standaard · ⚙️ bij voorwaarde · ⛔ afgeraden.
 
 ## Basis (Claude Code)
 
+### find-skills (vercel-labs/skills) ✅
+- Wat: zoekt bij een vraag ("is er een skill voor X?") passende skills in het open skills-ecosysteem (skills.sh) en installeert ze met `npx skills add`.
+- Herkomst: Vercel (officieel), MIT. Alleen een instructiebestand, geen code of dataverkeer behalve de zoekopdracht naar skills.sh.
+- Gebruik als: vóór je zelf een skill bouwt of een tool uit een post zoekt; eerst kijken of er al een gevestigde skill bestaat.
+- Niet als: blind installeren wat de zoekopdracht oplevert. Elke gevonden skill gaat eerst door eva-toolkit-advies (herkomst, lokkertje, data, meerwaarde). Vuistregel: 1K+ installs en een bekende maker.
+- Installatie: `npx skills add https://github.com/vercel-labs/skills --skill find-skills` (of zip uploaden in claude.ai → Skills).
+
 ### Context7 ✅
 - Wat: actuele officiële documentatie van libraries in Claude Code.
 - Gebruik als: er code geschreven wordt met externe libraries/frameworks.
