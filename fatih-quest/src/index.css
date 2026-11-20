@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@theme {
+  --color-night: #0b1d3a;
+  --color-night-2: #12294f;
+  --color-night-3: #1b3768;
+  --color-sea: #2dd4bf;
+  --color-leaf: #86efac;
+  --color-sun: #facc15;
+  --color-cream: #fff7e0;
+  --font-sans: "Nunito", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+}
+
+html, body, #root { min-height: 100%; }
+body {
+  margin: 0;
+  background: var(--color-night);
+  color: #f1f5f9;
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+/* Rustige sterrenhemel als achtergrond (statisch, geen knipperen) */
+.sky {
+  background:
+    radial-gradient(1.5px 1.5px at 20% 15%, #ffffffaa 50%, transparent 51%),
+    radial-gradient(1px 1px at 70% 25%, #ffffff88 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 85% 60%, #ffffff77 50%, transparent 51%),
+    radial-gradient(1px 1px at 35% 70%, #ffffff66 50%, transparent 51%),
+    radial-gradient(1px 1px at 55% 45%, #ffffff55 50%, transparent 51%),
+    radial-gradient(1200px 600px at 50% 110%, #134e4a 0%, transparent 60%),
+    linear-gradient(180deg, #0b1d3a 0%, #0f2547 100%);
+  background-attachment: fixed;
+}
+.sky-nature {
+  background:
+    radial-gradient(900px 500px at 50% 120%, #166534aa 0%, transparent 65%),
+    linear-gradient(180deg, #0b1d3a 0%, #0f3b3a 100%);
+  background-attachment: fixed;
+}
+
+.card { background: color-mix(in srgb, var(--color-night-2) 88%, transparent); border: 1px solid #ffffff14; }
+
+.fade-in { animation: fadeIn .35s ease-out both; }
+.pop { animation: pop .3s ease-out both; }
+.float { animation: float 6s ease-in-out infinite; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes pop { 0% { transform: scale(.92); opacity: .6 } 100% { transform: scale(1); opacity: 1 } }
+@keyframes float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-6px) } }
+@keyframes drift { from { transform: translateX(-10vw); } to { transform: translateX(110vw); } }
+@keyframes breathe { 0%,100% { transform: scale(.7) } 50% { transform: scale(1.15) } }
+
+.reduce-motion *, .reduce-motion *::before, .reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+}
+
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--color-sun); outline-offset: 2px; }
+
+@media print {
+  body { background: #fff !important; color: #000 !important; }
+  .no-print { display: none !important; }
+  .print-area { color: #000; background: #fff; }
+}
