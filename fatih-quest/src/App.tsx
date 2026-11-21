@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { isExerciseAvailable } from './core/availability';
 import { useRoute, go } from './core/router';
 import { useProfile } from './core/store';
 import { EXERCISES } from './core/catalog';
@@ -17,18 +18,23 @@ export default function App() {
   const { profile } = useProfile();
   const route = useRoute();
   const [, force] = useState(0);
+  const [r0, r1, r2] = route;
+  const validExercise =
+    r0 !== 'oefen' ||
+    (Object.hasOwn(EXERCISES, r1) && !!profile && isExerciseAvailable(r1 as ExerciseId, profile.settings.unlockedTopics));
+  useEffect(() => {
+    if (profile && !validExercise) go('home');
+  }, [profile, validExercise]);
   if (!profile) return <div className="min-h-screen sky flex items-center justify-center text-xl">Fatih Quest laden…</div>;
   if (!profile.onboarded) return <Onboarding />;
 
-  const [r0, r1, r2] = route;
   switch (r0) {
     case 'missie':
       return <Mission />;
     case 'wereld':
       return <World id={r1} />;
     case 'oefen':
-      if (r1 in EXERCISES) return <FreePlay key={`${r1}-${r2 ?? ''}`} id={r1 as ExerciseId} param={r2} />;
-      go('home');
+      if (validExercise) return <FreePlay key={`${r1}-${r2 ?? ''}`} id={r1 as ExerciseId} param={r2} />;
       return null;
     case 'voortgang':
       return <Progress />;

@@ -70,7 +70,19 @@ export function ExerciseRunner({ exerciseId, sessionId, param, maxRounds, timeLi
     if (phase === 'intro') speak(`${meta.title}. ${meta.childGoal}`);
   }, [phase, meta]);
 
-  useEffect(() => () => stopSpeaking(), []);
+  // Bij verlaten (terugknop, app sluiten): nog niet gemelde oefentijd alsnog doorgeven
+  const progressRef = useRef(onProgress);
+  progressRef.current = onProgress;
+  useEffect(
+    () => () => {
+      stopSpeaking();
+      const d = takeUnreported();
+      if (d > 0) progressRef.current?.(d);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+  const [saveError, setSaveError] = useState(false);
 
   const elapsedSec = () => (activeMs.current + (lastStart.current ? Date.now() - lastStart.current : 0)) / 1000;
 
@@ -96,17 +108,27 @@ export function ExerciseRunner({ exerciseId, sessionId, param, maxRounds, timeLi
   const onDone = async (r: RoundResult) => {
     if (!state || saving.current) return;
     saving.current = true;
-    const res = await recordRound(exerciseId, state.level, r, sessionId);
+    let res: Awaited<ReturnType<typeof recordRound>>;
     let gained = 0;
     let msg: string | null = null;
-    if (res.star) {
-      gained = 1;
-      msg = `⭐ ${res.starReason}`;
-      const fresh = await addStars(1);
-      if (fresh.length) {
-        const c = CARDS.find((x) => x.id === fresh[0]);
-        if (c) msg = `🎁 Nieuwe ontdekkingskaart: ${c.emoji} ${c.title}!`;
+    try {
+      res = await recordRound(exerciseId, state.level, r, sessionId);
+      if (res.star) {
+        gained = 1;
+        msg = `⭐ ${res.starReason}`;
+        const fresh = await addStars(1);
+        if (fresh.length) {
+          const c = CARDS.find((x) => x.id === fresh[0]);
+          if (c) msg = `🎁 Nieuwe ontdekkingskaart: ${c.emoji} ${c.title}!`;
+        }
       }
+      setSaveError(false);
+    } catch {
+      // Opslag mislukt (bijv. privévenster of volle opslag): gewoon doorgaan, niet vastlopen
+      setSaveError(true);
+      res = { state, change: null, star: false, starReason: null };
+    } finally {
+      saving.current = false;
     }
     const nextRound = round + 1;
     const newStars = stars + gained;
@@ -115,7 +137,6 @@ export function ExerciseRunner({ exerciseId, sessionId, param, maxRounds, timeLi
     setState(res.state);
     if (r.itemId) setRecent((x) => [...x, r.itemId!].slice(-15));
     setToast(msg);
-    saving.current = false;
 
     onProgress?.(takeUnreported());
     const timeUp = timeLimitSec !== undefined && elapsedSec() >= timeLimitSec;
@@ -183,7 +204,15 @@ export function ExerciseRunner({ exerciseId, sessionId, param, maxRounds, timeLi
         </div>
       )}
 
-      {phase === 'ronde' && !paused && (
+      {saveError && (
+        <p className="rounded-2xl bg-white/10 px-4 py-2 text-sm" role="status">
+          Let op: voortgang kon niet worden opgeslagen op dit apparaat. Oefenen kan gewoon doorgaan.
+        </p>
+      )}
+
+      {/* De ronde blijft gemonteerd tijdens pauze, zodat dezelfde opdracht terugkomt (geen 'overslaan' via pauze). */}
+      {phase === 'ronde' && (
+        <div hidden={paused}>
         <Comp
           key={`${exerciseId}-${round}`}
           level={state.level}
@@ -192,8 +221,10 @@ export function ExerciseRunner({ exerciseId, sessionId, param, maxRounds, timeLi
           unlocked={profile.settings.unlockedTopics}
           allowDistraction={profile.settings.allowDistraction}
           param={param}
+          sessionId={sessionId}
           onDone={onDone}
         />
+        </div>
       )}
 
       {paused && (

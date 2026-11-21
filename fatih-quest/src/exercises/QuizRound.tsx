@@ -15,7 +15,9 @@ interface Props {
 }
 
 /** Eén meerkeuzevraag met hint, rustig controleren en positieve feedback. */
-export function QuizRound({ item, support, confirm = false, onDone, maxAttempts = 2 }: Props) {
+export function QuizRound({ item, support, confirm = false, onDone, maxAttempts: maxProp }: Props) {
+  // Bij twee keuzes zou een tweede poging altijd goed zijn; dan telt alleen de eerste poging.
+  const maxAttempts = maxProp ?? (item.options.length <= 2 ? 1 : 2);
   const [selected, setSelected] = useState<string | null>(null);
   const [wrong, setWrong] = useState<string[]>([]);
   const [status, setStatus] = useState<'kiezen' | 'goed' | 'uitleg'>('kiezen');
@@ -176,7 +178,7 @@ export function QuizRound({ item, support, confirm = false, onDone, maxAttempts 
                 : checked
                   ? 'Goed! En knap dat je rustig controleerde.'
                   : 'Goed zo!'
-              : 'Dit is een lastige. Kijk, zo zit het:'}
+              : 'Net niet! Kijk, zo zit het:'}
           </p>
           <p className="text-lg">{item.explain}</p>
           <Button onClick={finish} className="mt-4 w-full">

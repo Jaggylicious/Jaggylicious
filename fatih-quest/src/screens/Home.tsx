@@ -7,7 +7,7 @@ import { planMission } from '../core/mission';
 export function Home() {
   const { profile } = useProfile();
   if (!profile) return null;
-  const plan = planMission(profile.settings.missionMinutes);
+  const plan = planMission(profile.settings.missionMinutes, new Date(), profile.settings.unlockedTopics);
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'Goedemorgen' : hour < 18 ? 'Hoi' : 'Goedenavond';
   return (

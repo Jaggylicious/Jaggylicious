@@ -15,7 +15,12 @@ const COMPLETE_BONUS = 3;
 
 export function Mission() {
   const { profile, addStars } = useProfile();
-  const plan = useMemo(() => planMission(profile?.settings.missionMinutes ?? 12), [profile?.settings.missionMinutes]);
+  const plan = useMemo(
+    () => planMission(profile?.settings.missionMinutes ?? 12, new Date(), profile?.settings.unlockedTopics),
+    // Plan alleen bij openen vastleggen, niet bij elke profielwijziging (bijv. sterren)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
   const { session, add, tick, finish } = useSessionRecorder('missie');
   const [blockIdx, setBlockIdx] = useState(-1); // -1 = overzicht
   const [startStep, setStartStep] = useState<'adem' | 'skdd'>('adem');
@@ -41,7 +46,8 @@ export function Mission() {
     setEarned((e) => e + s.stars);
     if (block?.exerciseId) {
       await add(block.exerciseId, s.activeSeconds, s.pauses);
-      setDone((d) => [...d, block.title]);
+      // Alleen echt afgeronde onderdelen tellen mee voor 'missie voltooid'
+      if (!s.stoppedEarly) setDone((d) => [...d, block.title]);
     }
     if (s.stoppedEarly) {
       setBlockIdx(plan.blocks.length - 1);
@@ -50,8 +56,10 @@ export function Mission() {
     nextBlock();
   };
 
+  const closed = useRef(false);
   useEffect(() => {
-    if (block?.kind === 'afsluiting') {
+    if (block?.kind === 'afsluiting' && !closed.current) {
+      closed.current = true;
       (async () => {
         const completed = done.length >= plan.blocks.filter((b) => b.kind === 'oefening').length;
         if (completed) {
@@ -73,7 +81,10 @@ export function Mission() {
       <TopBar
         title={plan.title}
         onBack={() => {
-          if (blockIdx > 0 && block?.kind !== 'afsluiting') finish(false, true);
+          if (blockIdx >= 0 && block?.kind !== 'afsluiting') {
+            const extra = blockIdx === 0 ? Math.round((Date.now() - startedAt.current) / 1000) : startSeconds.current;
+            void finish(false, true, extra);
+          }
           go('home');
         }}
       />

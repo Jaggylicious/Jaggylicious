@@ -6,6 +6,7 @@ export interface RoundProps {
   recentIds: string[];
   unlocked: string[];
   allowDistraction: boolean;
+  sessionId: string;
   onDone: (r: RoundResult) => void;
   /** Optionele parameter, bijv. gekozen ontdekonderwerp. */
   param?: string;

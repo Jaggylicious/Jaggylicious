@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Profile } from './types';
 import { loadProfile, saveProfile } from './db';
 import { setSpeechEnabled } from './speech';
@@ -13,11 +13,20 @@ interface Ctx {
 
 const ProfileContext = createContext<Ctx | null>(null);
 
+/**
+ * Profiel in geheugen + IndexedDB. Wijzigingen worden direct (optimistisch) in de UI
+ * doorgevoerd en daarna in volgorde opgeslagen, zodat snelle wijzigingen elkaar niet overschrijven.
+ */
 export function ProfileProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
+  const ref = useRef<Profile | null>(null);
+  const queue = useRef<Promise<void>>(Promise.resolve());
 
   const reload = useCallback(async () => {
-    setProfile(await loadProfile());
+    await queue.current;
+    const p = await loadProfile();
+    ref.current = p;
+    setProfile(p);
   }, []);
 
   useEffect(() => {
@@ -30,23 +39,32 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     document.documentElement.classList.toggle('reduce-motion', profile.settings.reduceMotion);
   }, [profile]);
 
-  const update = useCallback(async (fn: (p: Profile) => Profile) => {
-    const current = await loadProfile();
-    const next = fn(current);
-    await saveProfile(next);
+  const apply = useCallback((fn: (p: Profile) => Profile) => {
+    const base = ref.current;
+    if (!base) return Promise.resolve();
+    const next = fn(base);
+    ref.current = next;
     setProfile(next);
+    queue.current = queue.current.then(() => saveProfile(next)).catch(() => undefined);
+    return queue.current;
   }, []);
 
+  const update = useCallback(async (fn: (p: Profile) => Profile) => {
+    if (!ref.current) await reload();
+    await apply(fn);
+  }, [apply, reload]);
+
   const addStars = useCallback(async (n: number) => {
-    const current = await loadProfile();
-    const stars = current.stars + n;
-    const unlocked = cardsUnlockedBy(stars).map((c) => c.id);
-    const fresh = unlocked.filter((id) => !current.unlockedCards.includes(id));
-    const next = { ...current, stars, unlockedCards: [...new Set([...current.unlockedCards, ...unlocked])] };
-    await saveProfile(next);
-    setProfile(next);
+    if (!ref.current) await reload();
+    let fresh: string[] = [];
+    await apply((current) => {
+      const stars = current.stars + n;
+      const unlocked = cardsUnlockedBy(stars).map((c) => c.id);
+      fresh = unlocked.filter((id) => !current.unlockedCards.includes(id));
+      return { ...current, stars, unlockedCards: [...new Set([...current.unlockedCards, ...unlocked])] };
+    });
     return fresh;
-  }, []);
+  }, [apply, reload]);
 
   return (
     <ProfileContext.Provider value={{ profile, update, addStars, reload }}>{children}</ProfileContext.Provider>

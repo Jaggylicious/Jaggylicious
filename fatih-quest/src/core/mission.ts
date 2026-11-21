@@ -4,6 +4,7 @@
  * Oefeningen rouleren per dag zodat het afwisselend blijft.
  */
 import type { ExerciseId } from './types';
+import { isExerciseAvailable } from './availability';
 
 export type BlockKind = 'start' | 'oefening' | 'afsluiting';
 
@@ -60,7 +61,7 @@ export function dayIndex(date: Date): number {
   return Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000);
 }
 
-export function planMission(minutes: number, date = new Date()): MissionPlan {
+export function planMission(minutes: number, date = new Date(), unlocked?: string[]): MissionPlan {
   const m = Math.min(15, Math.max(6, Math.round(minutes)));
   const total = m * 60;
   const d = dayIndex(date);
@@ -72,7 +73,8 @@ export function planMission(minutes: number, date = new Date()): MissionPlan {
   const learn = rest - att - mem;
   const a = ATTENTION[d % ATTENTION.length];
   const w = MEMORY[d % MEMORY.length];
-  const l = LEARN[d % LEARN.length];
+  const learn_ = unlocked ? LEARN.filter((x) => isExerciseAvailable(x, unlocked)) : LEARN;
+  const l = learn_[d % learn_.length];
   const theme = d % 2 === 0 ? 'ruimte' : 'natuur';
   return {
     theme,

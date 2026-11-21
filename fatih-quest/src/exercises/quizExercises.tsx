@@ -5,6 +5,7 @@ import type { QuizItem } from '../content/quiz';
 import { DEHET_ITEMS, WOORDSOORT_ITEMS, ZINSDEEL_ITEMS } from '../content/taal';
 import { generateKlokGeld, generateSum, shuffle } from '../content/rekenen';
 import { pickFresh } from '../core/adaptive';
+import { isTopicAvailable } from '../core/availability';
 
 /** Kies een item op het huidige niveau (meestal) of een lager niveau (herhaling). */
 export function pickByLevel(items: QuizItem[], level: number, recentIds: string[]): QuizItem {
@@ -15,9 +16,12 @@ export function pickByLevel(items: QuizItem[], level: number, recentIds: string[
   return { ...it, options: shuffle(it.options) };
 }
 
-function makeBankExercise(items: QuizItem[], opts?: { confirm?: boolean; topicGate?: string }) {
-  return function BankExercise({ level, support, recentIds, onDone }: RoundProps) {
-    const item = useMemo(() => pickByLevel(items, level, recentIds), [level, recentIds]);
+function makeBankExercise(items: QuizItem[], opts?: { confirm?: boolean }) {
+  return function BankExercise({ level, support, recentIds, unlocked, onDone }: RoundProps) {
+    const item = useMemo(() => {
+      const allowed = items.filter((i) => isTopicAvailable(i.topic, unlocked));
+      return pickByLevel(allowed.length ? allowed : items, level, recentIds);
+    }, [level, recentIds, unlocked]);
     return <QuizRound key={item.id} item={item} support={support} confirm={opts?.confirm} onDone={onDone} />;
   };
 }

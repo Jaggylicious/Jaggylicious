@@ -178,8 +178,11 @@ export function ParentDashboard() {
 
 function SettingsTab({ profile, update }: { profile: Profile; update: (fn: (p: Profile) => Profile) => Promise<void> }) {
   const s = profile.settings;
-  const set = (patch: Partial<typeof s>) => update((p) => ({ ...p, settings: { ...p.settings, ...patch } }));
+  const set = (patch: Partial<typeof s> | ((cur: typeof s) => Partial<typeof s>)) =>
+    update((p) => ({ ...p, settings: { ...p.settings, ...(typeof patch === 'function' ? patch(p.settings) : patch) } }));
+  const [name, setName] = useState(s.childName);
   const [pin, setPin] = useState('');
+  const [pin2, setPin2] = useState('');
   const [msg, setMsg] = useState('');
   return (
     <div className="flex flex-col gap-4 mt-2">
@@ -198,7 +201,7 @@ function SettingsTab({ profile, update }: { profile: Profile; update: (fn: (p: P
         <Toggle label="Optionele achtergrondafleiding bij 'Blijf bij je missie'" checked={s.allowDistraction} onChange={(v) => set({ allowDistraction: v })} />
         <label className="flex flex-col gap-2 font-bold mt-3">
           Naam in de begroeting
-          <input value={s.childName} maxLength={20} onChange={(e) => set({ childName: e.target.value })} className="rounded-xl bg-night-3 border border-white/20 px-3 h-12 font-normal" />
+          <input value={name} maxLength={20} onChange={(e) => setName(e.target.value)} onBlur={() => set({ childName: name.trim() || 'Fatih' })} className="rounded-xl bg-night-3 border border-white/20 px-3 h-12 font-normal" />
         </label>
       </Tile>
       <Tile>
@@ -210,7 +213,7 @@ function SettingsTab({ profile, update }: { profile: Profile; update: (fn: (p: P
               key={t}
               label={TOPIC_LABEL[t] ?? t}
               checked={s.unlockedTopics.includes(t)}
-              onChange={(v) => set({ unlockedTopics: v ? [...s.unlockedTopics, t] : s.unlockedTopics.filter((x) => x !== t) })}
+              onChange={(v) => set((cur) => ({ unlockedTopics: v ? [...new Set([...cur.unlockedTopics, t])] : cur.unlockedTopics.filter((x) => x !== t) }))}
             />
           ))}
         </div>
@@ -219,14 +222,16 @@ function SettingsTab({ profile, update }: { profile: Profile; update: (fn: (p: P
         <h2 className="text-xl font-extrabold mb-3">Pincode wijzigen</h2>
         <div className="flex gap-2 flex-wrap">
           <input type="password" inputMode="numeric" value={pin} maxLength={6} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} placeholder="Nieuwe pincode" aria-label="Nieuwe pincode" className="rounded-xl bg-night-3 border border-white/20 px-3 h-12 flex-1" />
+          <input type="password" inputMode="numeric" value={pin2} maxLength={6} onChange={(e) => setPin2(e.target.value.replace(/\D/g, ''))} placeholder="Herhaal pincode" aria-label="Herhaal nieuwe pincode" className="rounded-xl bg-night-3 border border-white/20 px-3 h-12 flex-1" />
           <Button
             variant="secondary"
-            disabled={!isValidPin(pin)}
+            disabled={!isValidPin(pin) || pin !== pin2}
             onClick={async () => {
               const salt = makeSalt();
               const hash = await hashPin(pin, salt);
               await update((p) => ({ ...p, parentPinHash: hash, parentPinSalt: salt }));
               setPin('');
+              setPin2('');
               setMsg('Pincode gewijzigd.');
             }}
           >
@@ -272,8 +277,14 @@ function DataTab({ onDeleted, onWithdraw, consentAt }: { onDeleted: () => void; 
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `fatih-quest-gegevens-${new Date().toISOString().slice(0, 10)}.json`;
+    a.style.display = 'none';
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(a.href);
+    // Pas later opruimen: Safari/iPad start de download asynchroon
+    setTimeout(() => {
+      URL.revokeObjectURL(a.href);
+      a.remove();
+    }, 10_000);
   };
   return (
     <div className="flex flex-col gap-4 mt-2">

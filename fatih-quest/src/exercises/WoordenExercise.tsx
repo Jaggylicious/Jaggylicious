@@ -10,7 +10,8 @@ import { pickN, shuffle } from '../core/random';
 import { Button, SpeakButton } from '../components/ui';
 import { speak } from '../core/speech';
 
-let introducedThisSession = 0;
+/** Aantal nieuwe woorden per sessie (max 3), per sessie-id bijgehouden. */
+const introduced = new Map<string, number>();
 
 function meaningItem(w: Word, n: number): QuizItem {
   const others = pickN(WORDS.filter((x) => x.id !== w.id), n - 1).map((x) => x.meaning);
@@ -58,7 +59,7 @@ function pairItem(p: (typeof WORD_PAIRS)[number]): QuizItem {
   };
 }
 
-export function WoordenExercise({ level, support, unlocked, recentIds, onDone }: RoundProps) {
+export function WoordenExercise({ level, support, unlocked, recentIds, sessionId, onDone }: RoundProps) {
   const [word, setWord] = useState<Word | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [phase, setPhase] = useState<'laden' | 'uitleg' | 'vraag'>('laden');
@@ -78,19 +79,19 @@ export function WoordenExercise({ level, support, unlocked, recentIds, onDone }:
       const maxDiff = level <= 1 ? 1 : level === 2 ? 2 : 3;
       const pool = WORDS.filter((w) => w.difficulty <= maxDiff).map((w) => w.id);
       const cards = await allWordCards();
-      const { wordId, isNew } = chooseNextWord(pool, cards, Date.now(), introducedThisSession, 3, recentIds.slice(-2));
+      const { wordId, isNew } = chooseNextWord(pool, cards, Date.now(), introduced.get(sessionId) ?? 0, 3, recentIds.slice(-2));
       const w = WORDS.find((x) => x.id === wordId)!;
       setWord(w);
-      setIsNew(isNew || !cards[w.id] || support);
+      setIsNew(isNew || !cards[w.id]);
       const q = level >= 3 && Math.random() < 0.6 ? fillItem(w) : meaningItem(w, level <= 1 ? 2 : 3);
       setItem(q);
       if (isNew || support) {
-        if (isNew) introducedThisSession++;
+        if (isNew) introduced.set(sessionId, (introduced.get(sessionId) ?? 0) + 1);
         setPhase('uitleg');
         speak(`${w.article ? w.article + ' ' : ''}${w.word}. Dat betekent: ${w.meaning}. ${w.sentence}`);
       } else setPhase('vraag');
     })();
-  }, [level, unlocked, recentIds, support]);
+  }, [level, unlocked, recentIds, support, sessionId]);
 
   if (phase === 'laden' || !item) return <p className="text-lg">Even laden…</p>;
 

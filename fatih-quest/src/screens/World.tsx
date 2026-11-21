@@ -7,11 +7,15 @@ import { AFFIRMATIONS } from '../content/emoties';
 import { Breathing } from '../components/Breathing';
 import { SKDD } from '../components/SKDD';
 import { speak } from '../core/speech';
+import { useProfile } from '../core/store';
+import { isExerciseAvailable } from '../core/availability';
 
 export function World({ id }: { id: string }) {
   const w = WORLDS.find((x) => x.id === id);
   const [tool, setTool] = useState<'adem' | 'skdd' | null>(null);
-  if (!w) return null;
+  const { profile } = useProfile();
+  if (!w || !profile) return null;
+  const unlocked = profile.settings.unlockedTopics;
   const nature = id === 'taal' || id === 'emotie' || id === 'ontdek';
 
   return (
@@ -30,14 +34,15 @@ export function World({ id }: { id: string }) {
           <div className="flex flex-col gap-3 mt-2">
             {w.exercises.map((e) => {
               const m = EXERCISES[e];
+              const open = isExerciseAvailable(e, unlocked);
               return (
-                <button key={e} onClick={() => go(`oefen/${e}`)} className="card rounded-3xl p-5 flex items-center gap-4 text-left hover:border-sea/50 active:scale-[.99] transition">
+                <button key={e} disabled={!open} onClick={() => go(`oefen/${e}`)} className="card rounded-3xl p-5 flex items-center gap-4 text-left hover:border-sea/50 active:scale-[.99] transition disabled:opacity-45 disabled:active:scale-100">
                   <div className="text-5xl" aria-hidden>{m.emoji}</div>
                   <div className="flex-1">
                     <div className="text-xl font-extrabold">{m.title}</div>
-                    <div className="text-white/70">{m.childGoal}</div>
+                    <div className="text-white/70">{open ? m.childGoal : 'Komt later. Papa of mama zet deze voor je aan.'}</div>
                   </div>
-                  <div className="text-2xl" aria-hidden>→</div>
+                  <div className="text-2xl" aria-hidden>{open ? '→' : '🔒'}</div>
                 </button>
               );
             })}

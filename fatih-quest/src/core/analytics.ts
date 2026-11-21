@@ -27,12 +27,13 @@ export function weeklyMinutes(sessions: SessionRecord[], weeks = 6, now = Date.n
   const thisWeek = startOfWeek(now);
   const buckets: WeekBucket[] = [];
   for (let i = weeks - 1; i >= 0; i--) {
-    const start = thisWeek - i * WEEK;
-    const d = new Date(start);
-    buckets.push({ start, label: `${d.getDate()}/${d.getMonth() + 1}`, minutes: 0, sessions: 0 });
+    const d = new Date(thisWeek);
+    d.setDate(d.getDate() - 7 * i); // kalenderweken, ook correct rond zomer-/wintertijd
+    buckets.push({ start: d.getTime(), label: `${d.getDate()}/${d.getMonth() + 1}`, minutes: 0, sessions: 0 });
   }
+  const endOf = (i: number) => (i + 1 < buckets.length ? buckets[i + 1].start : (() => { const e = new Date(buckets[i].start); e.setDate(e.getDate() + 7); return e.getTime(); })());
   for (const s of sessions) {
-    const b = buckets.find((x) => s.startedAt >= x.start && s.startedAt < x.start + WEEK);
+    const b = buckets.find((x, i) => s.startedAt >= x.start && s.startedAt < endOf(i));
     if (b) {
       b.minutes += s.activeSeconds / 60;
       b.sessions += 1;

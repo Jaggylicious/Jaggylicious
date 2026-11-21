@@ -1,7 +1,7 @@
 /**
  * Adaptief leersysteem – bewust eenvoudig en uitlegbaar.
  *
- * Regels (zie ook docs/ADAPTIEF.md):
+ * Regels (zie ook README.md, sectie 'Adaptieve oefenlogica'):
  * 1. Elke ronde krijgt een uitkomst: zelfstandig, metHulp of nogNiet.
  * 2. OMHOOG: minstens 5 rondes op dit niveau gespeeld én van de laatste 5 rondes
  *    zijn er minstens 4 zelfstandig gelukt. (Meerdere succesvolle oefenmomenten.)

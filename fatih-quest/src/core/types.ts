@@ -122,6 +122,6 @@ export const DEFAULT_SETTINGS: Settings = {
   reduceMotion: false,
   sound: false,
   allowDistraction: false,
-  unlockedTopics: ['optellen', 'aftrekken', 'tafels-basis', 'klok-hele-halve', 'lidwoorden', 'woordsoorten-basis'],
+  unlockedTopics: ['optellen', 'aftrekken', 'tafels-basis', 'klok-hele-halve', 'lidwoorden', 'woordsoorten-basis', 'verhaalsommen'],
   childName: 'Fatih',
 };
