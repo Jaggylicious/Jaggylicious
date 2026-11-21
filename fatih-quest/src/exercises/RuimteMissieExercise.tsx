@@ -69,7 +69,7 @@ export function RuimteMissieExercise({ level, support, onDone }: RoundProps) {
             <li key={i} className={`card rounded-2xl p-3 text-lg font-bold flex items-center gap-3 ${result?.stepOk[i] ? 'border-leaf' : ''}`}>
               <span className="w-9 h-9 rounded-full bg-sea text-night flex items-center justify-center shrink-0">{i + 1}</span>
               <span className="flex-1">{stepText(s)}</span>
-              <button onClick={() => speak(stepText(s), true)} className="text-2xl" aria-label={`Stap ${i + 1} voorlezen`}>🔊</button>
+              <button onClick={() => speak(stepText(s), true)} className="text-2xl w-12 h-12 rounded-full hover:bg-white/10 shrink-0" aria-label={`Stap ${i + 1} voorlezen`}>🔊</button>
             </li>
           ))}
         </ol>

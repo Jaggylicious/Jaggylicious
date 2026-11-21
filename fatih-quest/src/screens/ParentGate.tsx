@@ -66,7 +66,7 @@ export function ParentGate({ onUnlock }: { onUnlock: () => void }) {
           {err && <p className="text-rose-300 font-bold" role="alert">{err}</p>}
           <Button onClick={submit} disabled={pin.length < 4}>Openen</Button>
           <Button variant="ghost" onClick={() => go('home')}>Terug</Button>
-          <button className="text-white/60 underline text-sm" onClick={() => setForgot(!forgot)}>Pincode vergeten?</button>
+          <button className="text-white/60 underline text-sm min-h-11 px-2" onClick={() => setForgot(!forgot)}>Pincode vergeten?</button>
           {forgot && (
             <div className="rounded-2xl bg-white/5 p-4 flex flex-col gap-3">
               <p>Zonder pincode kunt u de app alleen opnieuw inrichten. Daarbij worden <strong>alle gegevens op dit apparaat gewist</strong>.</p>

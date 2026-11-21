@@ -49,7 +49,7 @@ export function TopBar({
   right?: ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-3 px-4 pt-[max(env(safe-area-inset-top),12px)] pb-2 no-print">
+    <header className="flex items-center gap-3 px-4 pt-[max(env(safe-area-inset-top),12px)] pb-2 no-print">
       {onBack ? (
         <button
           onClick={onBack}
@@ -63,13 +63,13 @@ export function TopBar({
       )}
       <h1 className="flex-1 text-xl font-extrabold truncate">{title}</h1>
       {right}
-    </div>
+    </header>
   );
 }
 
 export function Stars({ n }: { n: number }) {
   return (
-    <div className="rounded-full bg-white/10 px-3 h-10 flex items-center gap-1 font-bold" aria-label={`${n} sterren`}>
+    <div className="rounded-full bg-white/10 px-3 h-11 flex items-center gap-1 font-bold" aria-label={`${n} sterren`}>
       <span aria-hidden>⭐</span>
       {n}
     </div>

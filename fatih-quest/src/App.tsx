@@ -10,7 +10,7 @@ import { World } from './screens/World';
 import { FreePlay } from './screens/FreePlay';
 import { Progress } from './screens/Progress';
 import { Onboarding } from './screens/Onboarding';
-import { ParentGate, isParentUnlocked } from './screens/ParentGate';
+import { ParentGate, isParentUnlocked, lockParent } from './screens/ParentGate';
 import { ParentDashboard } from './screens/ParentDashboard';
 import { Report } from './screens/Report';
 
@@ -25,6 +25,10 @@ export default function App() {
   useEffect(() => {
     if (profile && !validExercise) go('home');
   }, [profile, validExercise]);
+  // Ouderomgeving direct vergrendelen zodra je die op welke manier dan ook verlaat
+  useEffect(() => {
+    if (r0 !== 'ouder') lockParent();
+  }, [r0]);
   if (!profile) return <div className="min-h-screen sky flex items-center justify-center text-xl">Fatih Quest laden…</div>;
   if (!profile.onboarded) return <Onboarding />;
 

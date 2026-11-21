@@ -50,7 +50,7 @@ export function Progress() {
             <div className="flex items-center gap-3">
               <span className="text-6xl">{opened.emoji}</span>
               <h2 className="text-2xl font-extrabold flex-1">{opened.title}</h2>
-              <button className="text-2xl" onClick={() => speak(opened.fact, true)} aria-label="Voorlezen">🔊</button>
+              <button className="text-2xl w-12 h-12 rounded-full hover:bg-white/10" onClick={() => speak(opened.fact, true)} aria-label="Voorlezen">🔊</button>
             </div>
             <p className="text-xl mt-3">{opened.fact}</p>
           </div>

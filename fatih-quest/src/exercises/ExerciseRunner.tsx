@@ -159,7 +159,7 @@ export function ExerciseRunner({ exerciseId, sessionId, param, maxRounds, timeLi
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3 no-print">
-        <div className="flex-1 h-3 rounded-full bg-white/10 overflow-hidden" aria-label="Voortgang">
+        <div className="flex-1 h-3 rounded-full bg-white/10 overflow-hidden" role="progressbar" aria-label="Voortgang" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)}>
           <div className="h-full bg-sea rounded-full transition-all" style={{ width: `${progress * 100}%` }} />
         </div>
         <div className="font-bold">⭐ {stars}</div>
@@ -182,7 +182,7 @@ export function ExerciseRunner({ exerciseId, sessionId, param, maxRounds, timeLi
             <div className="text-7xl float" aria-hidden>{meta.emoji}</div>
             <h2 className="text-3xl font-extrabold">{meta.title}</h2>
             <p className="text-xl">{meta.childGoal}</p>
-            <button className="text-2xl" onClick={() => speak(meta.childGoal, true)} aria-label="Voorlezen">🔊</button>
+            <button className="text-2xl w-12 h-12 rounded-full hover:bg-white/10" onClick={() => speak(meta.childGoal, true)} aria-label="Voorlezen">🔊</button>
           </div>
           <Button
             onClick={() => {

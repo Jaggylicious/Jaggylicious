@@ -26,7 +26,7 @@ export function SKDD({ task, onDone }: { task?: string; onDone: () => void }) {
         <p className="text-3xl font-extrabold tracking-widest">{s.key}</p>
         <p className="text-2xl font-bold">{s.q}</p>
         {extra && <p className="text-lg text-white/80">{extra}</p>}
-        <button className="text-2xl" onClick={() => speak(`${s.key}. ${s.q} ${extra}`, true)} aria-label="Voorlezen">🔊</button>
+        <button className="text-2xl w-12 h-12 rounded-full hover:bg-white/10" onClick={() => speak(`${s.key}. ${s.q} ${extra}`, true)} aria-label="Voorlezen">🔊</button>
       </div>
       <Button
         onClick={() => {

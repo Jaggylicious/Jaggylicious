@@ -13,7 +13,7 @@ emoties en ontdekverhalen. Alles draait lokaal op het apparaat: geen account, ge
 cd fatih-quest
 npm install
 npm run dev        # ontwikkelserver
-npm test           # 56 geautomatiseerde tests
+npm test           # 62 geautomatiseerde tests
 npm run build      # productiebuild in dist/ (PWA, offline)
 npm run preview    # build lokaal bekijken
 ```
@@ -92,7 +92,7 @@ Er zijn geen lootboxes, streaks, ranglijsten of eindeloze sessies.
 
 ## 6. Uitgevoerde controles
 
-**Geautomatiseerd (`npm test`, 56 tests):**
+**Geautomatiseerd (`npm test`, 62 tests):**
 - adaptieve regels (omhoog/omlaag/ondersteuning, één fout verlaagt nooit, grenzen per oefening)
 - herhaalsysteem woorden
 - inhoud: ≥30 opgaven per module (woorden 36 + 16 paren, de/het 36, woordsoorten 30, zinsdelen 30, verhaalsommen 30, rekenen/klok/geld gegenereerd), elk antwoord staat tussen de opties, geen dubbele opties, verhaalsommen rekenkundig correct, geen claims over IQ/ADHD
@@ -103,6 +103,20 @@ Er zijn geen lootboxes, streaks, ranglijsten of eindeloze sessies.
 - emotie-oefening wordt niet gescoord en slaat geen gevoelens op
 - analyse: beheersing en zelfstandigheid apart, geen conclusie bij te weinig data, aanbevelingen zonder diagnoses
 
+- vrijgave van lesonderwerpen (ook in de dagmissie), pincode-blokkade, weekgrenzen rond zomertijd
+
+**Code-review (20 bevindingen, alle opgelost)**, onder meer: missie telt alleen echt afgeronde onderdelen; bij
+twee keuzes (de/het) telt raden niet als succes; vrijgave van taalonderwerpen werkt; pincode-blokkade blijft gelden
+na terug/herladen en loopt op (30 s, 1 min, …); ouderomgeving vergrendelt bij elk verlaten; pauze kan geen
+opdracht overslaan; oefentijd wordt ook bij verlaten opgeslagen; export werkt op iPad; app-updates alleen op het
+startscherm; 'pincode vergeten' vraagt een rekensom voor volwassenen; pincode wijzigen vraagt herhaling.
+
+**Beveiligingsreview:** geen kwetsbaarheden gevonden (geen XSS-routes, geen netwerkverkeer, pincode gezouten
+gehasht met veilige willekeur, export zonder pincodegegevens).
+
+**Toegankelijkheid (axe-core, WCAG 2 A/AA + best practices)** op 13 schermen × telefoon, tablet en laptop:
+0 overtredingen, geen horizontaal scrollen, alle aanraakvlakken ≥ 44 px.
+
 **Handmatig in een echte browser (Chromium, Pixel 7-formaat):** inrichten, dagmissie starten, alle 16 rondetypes
 één ronde doorlopen, ontdekverhaal, voortgang, verkeerde en juiste pincode, alle dashboardtabbladen, rapport,
 offline herladen. Geen JavaScript-fouten.
@@ -111,8 +125,8 @@ offline herladen. Geen JavaScript-fouten.
 
 - Illustraties zijn emoji en eenvoudige SVG-vormen; ze zien er per apparaat iets anders uit.
 - Voorlezen gebruikt de computerstem van het apparaat. Op sommige Android-toestellen moet *Nederlands* als spraakdata geïnstalleerd zijn. Zonder stem toont *Luister en kies* de opdracht als tekst.
-- De pincode houdt een kind tegen, maar is geen echte beveiliging tegen iemand met technische kennis van het apparaat (gegevens staan onversleuteld in de browseropslag).
+- De pincode houdt een kind tegen, maar is geen echte beveiliging tegen iemand met technische kennis van het apparaat (gegevens staan onversleuteld in de browseropslag). Ook kan wie de pincode niet weet via 'pincode vergeten' alles wissen en opnieuw inrichten (met rekensom als drempel); de oefengeschiedenis is dan wel weg, dus dat valt op.
 - Gegevens staan per browser/apparaat. Browseropslag wissen = gegevens kwijt (exporteer eerst via *Gegevens & privacy*).
-- Echte tests op fysieke Android-telefoons en tablets en een toegankelijkheidsaudit met schermlezer zijn nog niet gedaan. Er is alleen getest met emulatie in Chromium.
+- Echte tests op fysieke Android-telefoons en tablets en een test met een schermlezer (TalkBack) zijn nog niet gedaan. Er is getest met emulatie in Chromium (Pixel 7, iPad, laptop 1366×768).
 - De inhoud is zorgvuldig gecontroleerd, maar niet beoordeeld door een orthopedagoog of leerkracht. Laat dit bij voorkeur nog gebeuren.
 - Rekenen werkt met meerkeuze: raden blijft mogelijk (afgezwakt door de "Klopt mijn antwoord?"-stap en de adaptieve drempels).

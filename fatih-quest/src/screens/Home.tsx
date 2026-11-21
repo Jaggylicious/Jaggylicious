@@ -12,16 +12,16 @@ export function Home() {
   const greet = hour < 12 ? 'Goedemorgen' : hour < 18 ? 'Hoi' : 'Goedenavond';
   return (
     <Page>
-      <div className="flex items-center gap-3 px-4 pt-[max(env(safe-area-inset-top),14px)] pb-2 max-w-3xl mx-auto w-full">
+      <header className="flex items-center gap-3 px-4 pt-[max(env(safe-area-inset-top),14px)] pb-2 max-w-3xl mx-auto w-full">
         <div className="flex-1">
           <p className="text-sea font-bold tracking-wide text-sm">FATIH QUEST</p>
           <p className="text-white/60 text-sm">Ontdek. Leer. Groei.</p>
         </div>
         <Stars n={profile.stars} />
-        <button onClick={() => go('ouder')} className="rounded-full bg-white/10 h-10 px-3 text-sm font-bold" aria-label="Ouderomgeving">
+        <button onClick={() => go('ouder')} className="rounded-full bg-white/10 h-11 min-w-11 px-3 text-sm font-bold" aria-label="Ouderomgeving">
           🔒 Ouder
         </button>
-      </div>
+      </header>
       <Container>
         <h1 className="text-3xl md:text-4xl font-extrabold mt-3">
           {greet} {profile.settings.childName}! <span aria-hidden>👋</span>
